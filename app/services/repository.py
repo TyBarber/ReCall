@@ -13,7 +13,6 @@ class UpsertResult:
 
 
 class RecallRepository(Protocol):
-    def save_raw(self, source: RecallSource, source_recall_id: str, payload: dict[str, Any]) -> None: ...
     def upsert(self, recall: Recall) -> UpsertResult: ...
     def get(self, recall_id: str) -> Recall | None: ...
     def list(
@@ -26,3 +25,8 @@ class RecallRepository(Protocol):
         offset: int = 0,
     ) -> list[Recall]: ...
 
+
+class RawRecallRepository(Protocol):
+    def save_raw(
+        self, source: RecallSource, source_recall_id: str, payload: dict[str, Any]
+    ) -> None: ...

@@ -5,4 +5,13 @@ __pycache__/
 *.egg-info/
 data/
 *.db
+build/
+dist/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+terraform-plan.txt
+*.tfvars
+!terraform.tfvars.example
 .DS_Store

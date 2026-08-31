@@ -1,0 +1,9 @@
+project_name               = "recall"
+environment                = "dev"
+aws_region                 = "us-east-1"
+schedule_expression        = "rate(1 day)"
+api_throttle_rate_limit    = 10
+api_throttle_burst_limit   = 20
+ingestion_overlap_minutes  = 60
+first_run_lookback_days    = 60
+raw_retention_days         = 365

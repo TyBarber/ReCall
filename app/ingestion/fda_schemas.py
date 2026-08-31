@@ -16,12 +16,14 @@ class FDAEnforcementRecord(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     recall_number: str
+    event_id: str | None = None
     product_description: str
     reason_for_recall: str
     status: str
     classification: str | None = None
     recalling_firm: str | None = None
     recall_initiation_date: str | None = None
+    report_date: str | None = None
     distribution_pattern: str | None = None
     code_info: str | None = None
     product_quantity: str | None = None

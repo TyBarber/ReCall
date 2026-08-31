@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from app.ingestion.fda_schemas import FDAEnforcementRecord
 from app.ingestion.normalizer import normalize_fda_record
 from app.models.recall import RecallSource
-from app.services.repository import RecallRepository
+from app.services.repository import RawRecallRepository, RecallRepository
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +22,19 @@ class IngestionResult:
     skipped: int = 0
 
 
-def ingest_fda_records(records: Iterable[dict[str, Any]], repository: RecallRepository) -> IngestionResult:
+def ingest_fda_records(
+    records: Iterable[dict[str, Any]],
+    repository: RecallRepository,
+    raw_repository: RawRecallRepository | None = None,
+) -> IngestionResult:
+    raw_store = raw_repository or repository
     result = IngestionResult()
     for raw in records:
         result.fetched += 1
         try:
             external = FDAEnforcementRecord.model_validate(raw)
-            repository.save_raw(RecallSource.FDA, external.recall_number, raw)
+            if hasattr(raw_store, "save_raw"):
+                raw_store.save_raw(RecallSource.FDA, external.recall_number, raw)
             recall = normalize_fda_record(external)
             saved = repository.upsert(recall)
             if saved.created:
@@ -43,4 +49,3 @@ def ingest_fda_records(records: Iterable[dict[str, Any]], repository: RecallRepo
         result.fetched, result.created, result.updated, result.skipped,
     )
     return result
-
