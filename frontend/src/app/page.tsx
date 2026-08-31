@@ -44,14 +44,17 @@ export default async function Home({
 
   return (
     <div className="alert-page">
-      <section className="ticker-intro">
-        <div className="shell ticker-intro-inner">
+      <section className="hero">
+        <div className="shell hero-inner">
           <p className="source-line">
             <span aria-hidden="true" /> U.S. FDA enforcement data
           </p>
-          <h1>Current food recalls</h1>
-          <p className="ticker-intro-copy">
-            Search products, companies, recall reasons, and reported UPCs.
+          <h1>
+            Current food <em>recalls</em>
+          </h1>
+          <p className="hero-copy">
+            Check what has been pulled from shelves. Search by product,
+            company, recall reason, or UPC.
           </p>
           <SearchForm search={search} status={status} />
           <p className="source-note">
@@ -61,8 +64,8 @@ export default async function Home({
         </div>
       </section>
 
-      <main className="ticker-feed" id="current-recalls">
-        <div className="shell ticker-feed-inner">
+      <main className="feed-section" id="current-recalls">
+        <div className="shell feed-inner">
           <div className="feed-heading">
             <div>
               <h2>Recall feed</h2>

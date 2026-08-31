@@ -12,12 +12,12 @@ export default function Icon() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: "2px solid #FFB020",
-        background: "#15140F",
-        color: "#FFB020",
-        fontFamily: "monospace",
-        fontSize: 19,
-        fontWeight: 600,
+        borderRadius: 9,
+        background: "#14150F",
+        color: "#D6F24B",
+        fontFamily: "sans-serif",
+        fontSize: 21,
+        fontWeight: 700,
       }}
     >
       R

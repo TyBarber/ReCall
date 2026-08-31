@@ -7,7 +7,7 @@ type EmptyStateProps = {
 export function EmptyState({ filtered }: EmptyStateProps) {
   return (
     <div className="state-panel empty-state">
-      <p className="state-code" aria-hidden="true">00</p>
+      <p className="state-code" aria-hidden="true">No results</p>
       <h2>
         {filtered
           ? "No recalls match that search"

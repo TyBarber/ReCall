@@ -5,10 +5,10 @@ const MONTH_DAY_YEAR = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 });
 
-const TICKER_DATE = new Intl.DateTimeFormat("en-US", {
-  month: "2-digit",
-  day: "2-digit",
-  year: "2-digit",
+const SHORT_DATE = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
   timeZone: "UTC",
 });
 
@@ -23,15 +23,13 @@ export function formatRecallDate(value: string | null): string {
     : MONTH_DAY_YEAR.format(parsed);
 }
 
-export function formatTickerDate(value: string | null): string {
+export function formatShortDate(value: string | null): string {
   if (!value) {
-    return "--.--.--";
+    return "Date not reported";
   }
 
   const parsed = new Date(`${value}T00:00:00Z`);
-  return Number.isNaN(parsed.getTime())
-    ? value
-    : TICKER_DATE.format(parsed).replaceAll("/", ".");
+  return Number.isNaN(parsed.getTime()) ? value : SHORT_DATE.format(parsed);
 }
 
 export function formatClassification(value: string | null): string | null {
