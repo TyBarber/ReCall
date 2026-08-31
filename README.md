@@ -1,8 +1,8 @@
 # ReCall
 
-ReCall ingests official U.S. food enforcement recalls, preserves their raw source data, normalizes them, and exposes a FastAPI read API.
+ReCall ingests official U.S. food enforcement recalls, preserves their raw source data, normalizes them, exposes a FastAPI read API, and provides a consumer-facing recall finder.
 
-Milestone 2 adds an entirely Terraform-managed AWS serverless deployment while preserving the Milestone 1 SQLite workflow.
+Milestone 2 adds an entirely Terraform-managed AWS serverless deployment while preserving the Milestone 1 SQLite workflow. Milestone 3A adds the local Next.js consumer interface without changing the deployed backend.
 
 ## Architecture
 
@@ -32,6 +32,9 @@ Architecture decisions are documented in [`docs/architecture`](docs/architecture
 - Search, source/status filtering, limit, and offset pagination
 - Structured JSON logging with ingestion, recall, source, message, and request identifiers
 - Terraform-managed IAM, logs, alarms, throttling, queues, storage, compute, API, and schedule
+- Responsive current-recall feed and recall detail pages in `frontend/`
+- Search by product, company/brand, recall reason, or UPC, verified against the development API
+- Frontend loading, empty, error, not-found, and pagination states
 
 ## Local setup
 
@@ -65,6 +68,27 @@ pytest
 
 AWS behavior is tested with local fakes and does not require AWS credentials or access to an AWS account.
 
+## Frontend
+
+Node.js 20 or newer is required. The local environment file points to the deployed development API.
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000`. Run frontend checks with:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Known frontend/backend contract limitations are tracked in [`docs/frontend-backend-contract-todos.md`](docs/frontend-backend-contract-todos.md).
+
 ## Build and validate AWS deployment
 
 The Lambda artifact is built before Terraform operations:
@@ -92,4 +116,4 @@ Important AWS environment variables are supplied by Terraform: `EXECUTION_ENVIRO
 
 ## Intentionally not implemented
 
-This milestone does not include authentication, user accounts, pantry/watchlists, notifications, recommendations, retailer integration, a frontend/mobile app, WAF, CloudFront, Kubernetes, Redis, ECS, or EKS. DynamoDB substring search and numeric offsets use a scan for compatibility at small scale; continuation-token pagination and a dedicated search solution remain future work.
+This milestone does not include authentication, user accounts, pantry/watchlists, notifications, recommendations, retailer integration, a mobile app, payments, barcode scanning, WAF, CloudFront, Kubernetes, Redis, ECS, or EKS. The frontend is local-only and has not been deployed. DynamoDB substring search and numeric offsets use a scan for compatibility at small scale; continuation-token pagination and a dedicated search solution remain future work.
