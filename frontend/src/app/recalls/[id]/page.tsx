@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { getRecall, RecallApiError } from "@/lib/api/recalls";
 import {
   formatRecallDate,
-  formatTickerDate,
+  formatShortDate,
   hasUsefulSourceUrl,
 } from "@/lib/format";
 
@@ -57,7 +57,7 @@ export default async function RecallDetail({ params }: RecallDetailProps) {
         <div className="detail-code-line">
           {recall.recall_date ? (
             <time dateTime={recall.recall_date}>
-              {formatTickerDate(recall.recall_date)}
+              {formatShortDate(recall.recall_date)}
             </time>
           ) : null}
           <ClassificationBadge classification={recall.classification} />

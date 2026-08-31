@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/status-badge";
 import {
   classificationTone,
   formatRecallDate,
-  formatTickerDate,
+  formatShortDate,
 } from "@/lib/format";
 import type { Recall } from "@/lib/types";
 
@@ -55,7 +55,7 @@ export function RecallCard({ recall }: RecallCardProps) {
                     dateTime={recall.recall_date}
                     title={formatRecallDate(recall.recall_date)}
                   >
-                    {formatTickerDate(recall.recall_date)}
+                    {formatShortDate(recall.recall_date)}
                   </time>
                 </dd>
               </div>

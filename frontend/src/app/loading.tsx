@@ -2,16 +2,16 @@ export default function Loading() {
   return (
     <div className="alert-page home-loading">
       <span className="sr-only">Loading current recalls</span>
-      <section className="ticker-intro" aria-hidden="true">
-        <div className="shell ticker-intro-inner">
+      <section className="hero" aria-hidden="true">
+        <div className="shell hero-inner">
           <div className="skeleton skeleton-source" />
           <div className="skeleton skeleton-headline" />
           <div className="skeleton skeleton-copy" />
           <div className="skeleton skeleton-search" />
         </div>
       </section>
-      <main className="ticker-feed loading-content" aria-hidden="true">
-        <div className="shell ticker-feed-inner">
+      <main className="feed-section loading-content" aria-hidden="true">
+        <div className="shell feed-inner">
           <div className="skeleton skeleton-feed-heading" />
           <div className="recall-grid">
             {Array.from({ length: 6 }, (_, index) => (
