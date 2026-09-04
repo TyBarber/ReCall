@@ -94,6 +94,7 @@ def normalize_fda_record(record: FDAEnforcementRecord, *, now: datetime | None =
         classification=record.classification,
         status=record.status.strip(),
         recall_date=_parse_fda_date(record.recall_initiation_date),
+        reported_at=_parse_fda_date(record.report_date),
         distribution_pattern=record.distribution_pattern,
         upc_codes=upcs,
         lot_numbers=lots,

@@ -36,6 +36,7 @@ def test_normalizes_fda_record() -> None:
             "classification": "Class I",
             "recalling_firm": "Example Foods",
             "recall_initiation_date": "20250102",
+            "report_date": "20250105",
             "distribution_pattern": "Nationwide",
             "code_info": "Lot: ABC-123",
             "openfda": {"brand_name": ["Example Brand"], "upc": ["987654321098"]},
@@ -45,6 +46,7 @@ def test_normalizes_fda_record() -> None:
     assert recall.source_recall_id == "F-1000-2025"
     assert recall.brand == "Example Brand"
     assert recall.recall_date == date(2025, 1, 2)
+    assert recall.reported_at == date(2025, 1, 5)
     assert recall.upc_codes == ["987654321098", "123456789012"]
     assert recall.lot_numbers == ["ABC-123"]
 
@@ -79,6 +81,19 @@ def test_valid_recall_number_preserves_legacy_id_exactly() -> None:
 
     assert recall.id == "9111d5c1-d82d-5052-9161-f8b32d481860"
     assert recall.id == str(uuid5(NAMESPACE_URL, "fda:H-1237-2026"))
+
+
+def test_report_date_does_not_change_valid_recall_identity() -> None:
+    earlier = normalize_fda_record(
+        fallback_record(recall_number="H-1237-2026", report_date="20260819")
+    )
+    later = normalize_fda_record(
+        fallback_record(recall_number="H-1237-2026", report_date="20260901")
+    )
+
+    assert earlier.id == later.id == "9111d5c1-d82d-5052-9161-f8b32d481860"
+    assert earlier.reported_at == date(2026, 8, 19)
+    assert later.reported_at == date(2026, 9, 1)
 
 
 def test_same_blank_record_has_stable_fallback_id() -> None:

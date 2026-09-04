@@ -6,7 +6,7 @@ from typing import Any
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from app.models.recall import Recall, RecallSource
+from app.models.recall import Recall, RecallSort, RecallSource
 from app.services.repository import UpsertResult
 
 
@@ -28,6 +28,8 @@ class DynamoDBRecallRepository:
         item["status_normalized"] = status
         item["source_status"] = f"{recall.source.value}#{status}"
         item["recall_sort"] = f"{recall_date}#{recall.id}"
+        if recall.reported_at:
+            item["reported_sort"] = f"{recall.reported_at.isoformat()}#{recall.id}"
         return item
 
     @staticmethod
@@ -35,7 +37,13 @@ class DynamoDBRecallRepository:
         document = {
             key: value
             for key, value in item.items()
-            if key not in {"status_normalized", "source_status", "recall_sort"}
+            if key
+            not in {
+                "status_normalized",
+                "source_status",
+                "recall_sort",
+                "reported_sort",
+            }
         }
         return Recall.model_validate(document)
 
@@ -55,19 +63,48 @@ class DynamoDBRecallRepository:
         item = self.table.get_item(Key={"id": recall_id}).get("Item")
         return self._from_item(item) if item else None
 
-    def list(
+    def _newest_by_source(
+        self, *, source: RecallSource, limit: int, offset: int
+    ) -> list[Recall]:
+        target_count = offset + limit
+        recalls: list[Recall] = []
+        kwargs: dict[str, Any] = {
+            "IndexName": "source-reported-date-index",
+            "KeyConditionExpression": Key("source").eq(source.value),
+            "ScanIndexForward": False,
+            "Limit": target_count,
+        }
+        while len(recalls) < target_count:
+            response = self.table.query(**kwargs)
+            recalls.extend(
+                self._from_item(item) for item in response.get("Items", [])
+            )
+            last_key = response.get("LastEvaluatedKey")
+            if not last_key:
+                break
+            kwargs["ExclusiveStartKey"] = last_key
+            kwargs["Limit"] = target_count - len(recalls)
+        return recalls[offset:target_count]
+
+    def _matching_recalls(
         self,
         *,
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
-        limit: int = 100,
-        offset: int = 0,
+        sort: RecallSort | None = None,
     ) -> list[Recall]:
         recalls: list[Recall] = []
         kwargs: dict[str, Any] = {}
         operation = self.table.scan
-        if search is None and source is not None and status is not None:
+        if search is None and source is not None and sort == RecallSort.NEWEST:
+            operation = self.table.query
+            kwargs = {
+                "IndexName": "source-reported-date-index",
+                "KeyConditionExpression": Key("source").eq(source.value),
+                "ScanIndexForward": False,
+            }
+        elif search is None and source is not None and status is not None:
             operation = self.table.query
             kwargs = {
                 "IndexName": "source-status-date-index",
@@ -100,8 +137,52 @@ class DynamoDBRecallRepository:
             and (status_value is None or recall.status.casefold() == status_value)
             and (search_value is None or search_value in recall.model_dump_json().casefold())
         ]
+        date_field = (
+            (lambda recall: recall.reported_at)
+            if sort == RecallSort.NEWEST
+            else (lambda recall: recall.recall_date)
+        )
         filtered.sort(
-            key=lambda recall: (recall.recall_date is not None, recall.recall_date, recall.id),
+            key=lambda recall: (
+                date_field(recall) is not None,
+                date_field(recall),
+                recall.id,
+            ),
             reverse=True,
+        )
+        return filtered
+
+    def count(
+        self,
+        *,
+        search: str | None = None,
+        source: RecallSource | None = None,
+        status: str | None = None,
+    ) -> int:
+        return len(
+            self._matching_recalls(search=search, source=source, status=status)
+        )
+
+    def list(
+        self,
+        *,
+        search: str | None = None,
+        source: RecallSource | None = None,
+        status: str | None = None,
+        sort: RecallSort | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Recall]:
+        if (
+            sort == RecallSort.NEWEST
+            and search is None
+            and source is not None
+            and status is None
+        ):
+            return self._newest_by_source(
+                source=source, limit=limit, offset=offset
+            )
+        filtered = self._matching_recalls(
+            search=search, source=source, status=status, sort=sort
         )
         return filtered[offset : offset + limit]

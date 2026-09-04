@@ -12,11 +12,12 @@ describe("RecallCard", () => {
       screen.getByRole("heading", { name: recallFixture.product_name }),
     ).toBeInTheDocument();
     expect(screen.getByText("FDA Class II")).toBeInTheDocument();
-    expect(screen.getByText("Recall initiated")).toBeInTheDocument();
-    expect(screen.getByText("Distribution")).toBeInTheDocument();
+    expect(screen.getByText("Listed by FDA")).toBeInTheDocument();
+    expect(screen.getByText("August 19, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Sold/distributed in")).toBeInTheDocument();
     expect(screen.getByText("NY, PA")).toBeInTheDocument();
-    expect(screen.getByText("Product codes")).toBeInTheDocument();
-    expect(screen.getByText("2 FDA-reported codes")).toBeInTheDocument();
+    expect(screen.getByText("Product codes reported by FDA")).toBeInTheDocument();
+    expect(screen.getByText("2 codes")).toBeInTheDocument();
     expect(screen.queryByText("Recall date")).not.toBeInTheDocument();
     expect(screen.queryByText("FDA recall number")).not.toBeInTheDocument();
     expect(screen.queryByText(recallFixture.id)).not.toBeInTheDocument();
@@ -52,6 +53,7 @@ describe("RecallCard", () => {
         recall={{
           ...recallFixture,
           recall_date: null,
+          reported_at: null,
           states: [],
           distribution_pattern: null,
           upc_codes: [],
@@ -60,9 +62,12 @@ describe("RecallCard", () => {
       />,
     );
 
-    expect(screen.queryByText("Recall initiated")).not.toBeInTheDocument();
-    expect(screen.queryByText("Distribution")).not.toBeInTheDocument();
-    expect(screen.queryByText("Product codes")).not.toBeInTheDocument();
+    expect(screen.queryByText("Listed by FDA")).not.toBeInTheDocument();
+    expect(screen.queryByText("Recall started")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sold/distributed in")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Product codes reported by FDA"),
+    ).not.toBeInTheDocument();
   });
 
   it("uses the distribution pattern when no states are available", () => {
@@ -77,5 +82,30 @@ describe("RecallCard", () => {
     );
 
     expect(screen.getByText("Nationwide distribution.")).toBeInTheDocument();
+  });
+
+  it("labels the initiation date as Recall started when no report date exists", () => {
+    render(
+      <RecallCard recall={{ ...recallFixture, reported_at: null }} />,
+    );
+
+    expect(screen.getByText("Recall started")).toBeInTheDocument();
+    expect(screen.getByText("July 14, 2026")).toBeInTheDocument();
+    expect(screen.queryByText("Listed by FDA")).not.toBeInTheDocument();
+  });
+
+  it("keeps homepage previews focused on essential recall facts", () => {
+    render(<RecallCard recall={recallFixture} variant="preview" />);
+
+    expect(screen.getByText("Why it was recalled")).toBeInTheDocument();
+    expect(screen.getByText("Listed by FDA")).toBeInTheDocument();
+    expect(screen.queryByText("Sold/distributed in")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Product codes reported by FDA"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /view recall/i })).toHaveAttribute(
+      "href",
+      `/recalls/${recallFixture.id}`,
+    );
   });
 });

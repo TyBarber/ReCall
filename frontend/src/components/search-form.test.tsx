@@ -10,7 +10,9 @@ import { SearchForm } from "@/components/search-form";
 
 describe("SearchForm", () => {
   it("advertises only live-verified search categories", () => {
-    render(<SearchForm search="mac & cheese" status="Ongoing" />);
+    const { container } = render(
+      <SearchForm search="mac & cheese" status="Ongoing" />,
+    );
 
     expect(screen.getByRole("searchbox")).toHaveAttribute(
       "placeholder",
@@ -23,8 +25,22 @@ describe("SearchForm", () => {
     );
     expect(screen.getByRole("link", { name: "Salmonella" })).toHaveAttribute(
       "href",
-      "/?search=Salmonella&status=Ongoing#current-recalls",
+      "/recalls?search=Salmonella&status=Ongoing&page=1#current-recalls",
     );
+    expect(screen.getByDisplayValue("1")).toHaveAttribute("name", "page");
     expect(screen.queryByText(/most serious/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Search" })).toHaveAttribute(
+      "type",
+      "submit",
+    );
+    expect(container.querySelector(".corner-btn-wrapper")).toHaveStyle({
+      "--accent": "#D8FF3E",
+      "--button-surface": "#FFFDF4",
+    });
+    expect(container.querySelector(".corner-btn-action-icon")).toBeInTheDocument();
+    expect(container.querySelector("svg.command-icon")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
   });
 });

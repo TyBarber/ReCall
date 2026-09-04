@@ -1,27 +1,33 @@
 export default function Loading() {
   return (
-    <div className="alert-page home-loading">
+    <div className="home-page home-loading">
       <span className="sr-only">Loading current recalls</span>
-      <section className="ticker-intro" aria-hidden="true">
-        <div className="shell ticker-intro-inner">
-          <div className="skeleton skeleton-source" />
-          <div className="skeleton skeleton-headline" />
-          <div className="skeleton skeleton-copy" />
-          <div className="skeleton skeleton-search" />
+      <section className="signal-hero" aria-hidden="true">
+        <div className="shell signal-hero-inner">
+          <div className="hero-primary">
+            <div className="skeleton home-skeleton home-skeleton-headline" />
+            <div className="skeleton home-skeleton home-skeleton-copy" />
+            <div className="home-skeleton-search">
+              <div className="skeleton home-skeleton home-skeleton-input" />
+            </div>
+          </div>
+          <div className="spotlight-skeleton">
+            <div className="skeleton spotlight-skeleton-line" />
+            <div className="skeleton spotlight-skeleton-title" />
+            <div className="skeleton spotlight-skeleton-copy" />
+          </div>
         </div>
       </section>
-      <main className="ticker-feed loading-content" aria-hidden="true">
-        <div className="shell ticker-feed-inner">
-          <div className="skeleton skeleton-feed-heading" />
+      <main className="recall-feed-section loading-content" aria-hidden="true">
+        <div className="shell recall-feed-inner">
+          <div className="skeleton feed-skeleton feed-skeleton-title" />
           <div className="recall-grid">
-            {Array.from({ length: 6 }, (_, index) => (
-              <div className="recall-row skeleton-row" key={index}>
-                <div className="skeleton skeleton-code" />
-                <div className="skeleton-row-copy">
-                  <div className="skeleton skeleton-line skeleton-wide" />
-                  <div className="skeleton skeleton-line" />
-                </div>
-                <div className="skeleton skeleton-status" />
+            {Array.from({ length: 4 }, (_, index) => (
+              <div className="recall-card skeleton-card" key={index}>
+                <div className="skeleton skeleton-pill" />
+                <div className="skeleton skeleton-line skeleton-wide" />
+                <div className="skeleton skeleton-line" />
+                <div className="skeleton skeleton-block" />
               </div>
             ))}
           </div>

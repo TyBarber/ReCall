@@ -1,16 +1,13 @@
 import Link from "next/link";
 
-import { ClassificationBadge } from "@/components/classification-badge";
+import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
-import {
-  classificationTone,
-  formatRecallDate,
-  formatTickerDate,
-} from "@/lib/format";
+import { classificationTone, formatRecallDate } from "@/lib/format";
 import type { Recall } from "@/lib/types";
 
 type RecallCardProps = {
   recall: Recall;
+  variant?: "directory" | "preview";
 };
 
 function distributionSummary(recall: Recall): string | null {
@@ -30,71 +27,60 @@ function codeSummary(recall: Recall): string | null {
   if (total === 0) {
     return null;
   }
-  return `${total} FDA-reported code${total === 1 ? "" : "s"}`;
+  return `${total} code${total === 1 ? "" : "s"}`;
 }
 
-export function RecallCard({ recall }: RecallCardProps) {
+export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
+  const isPreview = variant === "preview";
   const tone = classificationTone(recall.classification);
-  const distribution = distributionSummary(recall);
-  const codes = codeSummary(recall);
+  const distribution = isPreview ? null : distributionSummary(recall);
+  const codes = isPreview ? null : codeSummary(recall);
+  const displayDate = recall.reported_at || recall.recall_date;
 
   return (
-    <article className={`recall-row recall-row-${tone}`}>
-      <Link
-        className="recall-row-link"
-        href={`/recalls/${recall.id}`}
-        aria-label={`View recall details for ${recall.product_name}`}
-      >
-        <div className="recall-row-code">
-          {recall.recall_date ? (
-            <dl>
-              <div>
-                <dt className="sr-only">Recall initiated</dt>
-                <dd>
-                  <time
-                    dateTime={recall.recall_date}
-                    title={formatRecallDate(recall.recall_date)}
-                  >
-                    {formatTickerDate(recall.recall_date)}
-                  </time>
-                </dd>
-              </div>
-            </dl>
+    <article
+      className={`recall-card recall-card-${tone}${isPreview ? " recall-card-preview" : ""}`}
+    >
+      <div className="card-signals" aria-label="Recall classification and status">
+        <RecallClassification classification={recall.classification} />
+        <StatusBadge status={recall.status} />
+      </div>
+      <div className="card-heading">
+        <p className="card-company">{recall.brand || "Company not reported"}</p>
+        <h3>{recall.product_name}</h3>
+      </div>
+      <div className="card-reason">
+        <span>Why it was recalled</span>
+        <p>{recall.recall_reason}</p>
+      </div>
+      {displayDate || distribution || codes ? (
+        <dl className="card-quick-facts" aria-label="Recall quick facts">
+          {displayDate ? (
+            <div>
+              <dt>{recall.reported_at ? "Listed by FDA" : "Recall started"}</dt>
+              <dd>{formatRecallDate(displayDate)}</dd>
+            </div>
           ) : null}
-          <ClassificationBadge classification={recall.classification} />
-        </div>
-
-        <div className="recall-row-copy">
-          <div className="recall-product-line">
-            <h3>{recall.product_name}</h3>
-            <p>{recall.brand || "Company not reported"}</p>
-          </div>
-          <p className="recall-row-reason">{recall.recall_reason}</p>
-          {distribution || codes ? (
-            <dl className="recall-row-facts">
-              {distribution ? (
-                <div>
-                  <dt>Distribution</dt>
-                  <dd title={distribution}>{distribution}</dd>
-                </div>
-              ) : null}
-              {codes ? (
-                <div>
-                  <dt>Product codes</dt>
-                  <dd>{codes}</dd>
-                </div>
-              ) : null}
-            </dl>
+          {distribution ? (
+            <div className="fact-distribution">
+              <dt>Sold/distributed in</dt>
+              <dd title={distribution}>{distribution}</dd>
+            </div>
           ) : null}
-        </div>
-
-        <div className="recall-row-state">
-          <StatusBadge status={recall.status} />
-          <span className="recall-row-action">
-            View details <span aria-hidden="true">→</span>
-          </span>
-        </div>
-      </Link>
+          {codes ? (
+            <div className="fact-codes">
+              <dt>Product codes reported by FDA</dt>
+              <dd>{codes}</dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
+      <div className="card-actions">
+        <Link className="card-detail-link" href={`/recalls/${recall.id}`}>
+          {isPreview ? "View recall" : "View recall details"}
+          <span aria-hidden="true">→</span>
+        </Link>
+      </div>
     </article>
   );
 }

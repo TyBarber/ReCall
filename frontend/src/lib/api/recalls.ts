@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import type { Recall, RecallListParams } from "@/lib/types";
+import type { Recall, RecallListParams, RecallPage } from "@/lib/types";
 
 export class RecallApiError extends Error {
   constructor(
@@ -39,6 +39,9 @@ export function isRecall(value: unknown): value is Recall {
     typeof recall.product_name === "string" &&
     typeof recall.recall_reason === "string" &&
     typeof recall.status === "string" &&
+    (recall.reported_at === undefined ||
+      recall.reported_at === null ||
+      typeof recall.reported_at === "string") &&
     isStringArray(recall.states) &&
     isStringArray(recall.upc_codes) &&
     isStringArray(recall.lot_numbers) &&
@@ -47,7 +50,36 @@ export function isRecall(value: unknown): value is Recall {
   );
 }
 
-async function request(path: string): Promise<unknown> {
+type ApiResponse = {
+  data: unknown;
+  headers: Headers;
+};
+
+function recallListPath(params: RecallListParams): string {
+  const query = new URLSearchParams();
+  query.set("source", "fda");
+  query.set("limit", String(params.limit ?? 12));
+  query.set("offset", String(params.offset ?? 0));
+  if (params.search?.trim()) {
+    query.set("search", params.search.trim());
+  }
+  if (params.status?.trim()) {
+    query.set("status", params.status.trim());
+  }
+  if (params.sort) {
+    query.set("sort", params.sort);
+  }
+  return `/recalls?${query.toString()}`;
+}
+
+function validatedRecallList(data: unknown): Recall[] {
+  if (!Array.isArray(data) || !data.every(isRecall)) {
+    throw new RecallApiError("The recall service returned invalid recall data.");
+  }
+  return data;
+}
+
+async function request(path: string): Promise<ApiResponse> {
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}${path}`, { cache: "no-store" });
@@ -69,35 +101,38 @@ async function request(path: string): Promise<unknown> {
   }
 
   try {
-    return await response.json();
+    return { data: await response.json(), headers: response.headers };
   } catch {
     throw new RecallApiError("The recall service returned unreadable data.");
   }
 }
 
+export async function getRecallPage(
+  params: RecallListParams = {},
+): Promise<RecallPage> {
+  const { data, headers } = await request(recallListPath(params));
+  const recalls = validatedRecallList(data);
+
+  const totalCountHeader = headers.get("x-total-count");
+  const totalCount = Number.parseInt(totalCountHeader ?? "", 10);
+  if (!Number.isSafeInteger(totalCount) || totalCount < 0) {
+    throw new RecallApiError(
+      "The recall service did not provide valid pagination metadata.",
+    );
+  }
+
+  return { recalls, totalCount };
+}
+
 export async function getRecalls(
   params: RecallListParams = {},
 ): Promise<Recall[]> {
-  const query = new URLSearchParams();
-  query.set("source", "fda");
-  query.set("limit", String(params.limit ?? 12));
-  query.set("offset", String(params.offset ?? 0));
-  if (params.search?.trim()) {
-    query.set("search", params.search.trim());
-  }
-  if (params.status?.trim()) {
-    query.set("status", params.status.trim());
-  }
-
-  const data = await request(`/recalls?${query.toString()}`);
-  if (!Array.isArray(data) || !data.every(isRecall)) {
-    throw new RecallApiError("The recall service returned invalid recall data.");
-  }
-  return data;
+  const { data } = await request(recallListPath(params));
+  return validatedRecallList(data);
 }
 
 export const getRecall = cache(async (id: string): Promise<Recall> => {
-  const data = await request(`/recalls/${encodeURIComponent(id)}`);
+  const { data } = await request(`/recalls/${encodeURIComponent(id)}`);
   if (!isRecall(data)) {
     throw new RecallApiError("The recall service returned invalid recall data.");
   }

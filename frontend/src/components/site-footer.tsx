@@ -2,9 +2,13 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="shell footer-inner">
-        <p><strong>ReCall</strong> tracks current U.S. food recalls.</p>
+        <div>
+          <strong>ReCall</strong>
+          <p>Clear food recall information for everyday decisions.</p>
+        </div>
         <p className="footer-trust">
-          Source: U.S. FDA enforcement data
+          Recall information is sourced from U.S. FDA enforcement data and may
+          be updated as investigations develop.
         </p>
       </div>
     </footer>

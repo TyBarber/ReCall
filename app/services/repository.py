@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from app.models.recall import Recall, RecallSource
+from app.models.recall import Recall, RecallSort, RecallSource
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,12 +15,20 @@ class UpsertResult:
 class RecallRepository(Protocol):
     def upsert(self, recall: Recall) -> UpsertResult: ...
     def get(self, recall_id: str) -> Recall | None: ...
+    def count(
+        self,
+        *,
+        search: str | None = None,
+        source: RecallSource | None = None,
+        status: str | None = None,
+    ) -> int: ...
     def list(
         self,
         *,
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        sort: RecallSort | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Recall]: ...

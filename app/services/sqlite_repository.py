@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.models.recall import Recall, RecallSource
+from app.models.recall import Recall, RecallSort, RecallSource
 from app.services.repository import UpsertResult
 
 
@@ -71,15 +71,13 @@ class SQLiteRecallRepository:
         row = self._connection.execute("SELECT document FROM recalls WHERE id=?", (recall_id,)).fetchone()
         return Recall.model_validate_json(row["document"]) if row else None
 
-    def list(
-        self,
+    @staticmethod
+    def _filters(
         *,
-        search: str | None = None,
-        source: RecallSource | None = None,
-        status: str | None = None,
-        limit: int = 100,
-        offset: int = 0,
-    ) -> list[Recall]:
+        search: str | None,
+        source: RecallSource | None,
+        status: str | None,
+    ) -> tuple[str, list[Any]]:
         clauses: list[str] = []
         parameters: list[Any] = []
         if search:
@@ -92,10 +90,44 @@ class SQLiteRecallRepository:
             clauses.append("LOWER(json_extract(document, '$.status')) = ?")
             parameters.append(status.lower())
         where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+        return where, parameters
+
+    def count(
+        self,
+        *,
+        search: str | None = None,
+        source: RecallSource | None = None,
+        status: str | None = None,
+    ) -> int:
+        where, parameters = self._filters(
+            search=search, source=source, status=status
+        )
+        row = self._connection.execute(
+            f"SELECT COUNT(*) AS total FROM recalls{where}", parameters
+        ).fetchone()
+        return int(row["total"])
+
+    def list(
+        self,
+        *,
+        search: str | None = None,
+        source: RecallSource | None = None,
+        status: str | None = None,
+        sort: RecallSort | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Recall]:
+        where, parameters = self._filters(
+            search=search, source=source, status=status
+        )
         parameters.extend([limit, offset])
+        order_by = (
+            "json_extract(document, '$.reported_at') DESC, id"
+            if sort == RecallSort.NEWEST
+            else "json_extract(document, '$.recall_date') DESC, id"
+        )
         rows = self._connection.execute(
-            f"SELECT document FROM recalls{where} ORDER BY json_extract(document, '$.recall_date') DESC, id LIMIT ? OFFSET ?",
+            f"SELECT document FROM recalls{where} ORDER BY {order_by} LIMIT ? OFFSET ?",
             parameters,
         ).fetchall()
         return [Recall.model_validate_json(row["document"]) for row in rows]
-

@@ -10,33 +10,53 @@ describe("RecallFeed", () => {
       <RecallFeed
         recalls={[]}
         search="not a product"
-        offset={0}
+        currentPage={1}
         limit={12}
+        totalCount={0}
       />,
     );
 
     expect(
-      screen.getByRole("heading", { name: "No recalls match that search" }),
+      screen.getByRole("heading", { name: "No matching recalls found" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Clear search and filters" }),
-    ).toHaveAttribute("href", "/");
+    ).toHaveAttribute("href", "/recalls");
   });
 
-  it("renders recall results and pagination without inventing totals", () => {
+  it("renders exactly 12 recall results with truthful pagination", () => {
     render(
       <RecallFeed
         recalls={Array.from({ length: 12 }, (_, index) => ({
           ...recallFixture,
           id: `${recallFixture.id}-${index}`,
         }))}
-        offset={0}
+        currentPage={1}
         limit={12}
+        totalCount={25}
       />,
     );
 
     expect(screen.getAllByRole("article")).toHaveLength(12);
     expect(screen.getByRole("link", { name: /next/i })).toBeInTheDocument();
-    expect(screen.queryByText(/of \d+/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
+  });
+
+  it("handles a partial final page and disables Next", () => {
+    render(
+      <RecallFeed
+        recalls={[recallFixture]}
+        currentPage={3}
+        limit={12}
+        totalCount={25}
+      />,
+    );
+
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(screen.getByText("Page 3 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Next").closest("span")).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 });

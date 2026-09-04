@@ -19,12 +19,10 @@ production traffic.
 
 ## Contract improvements to evaluate later
 
-- Expose FDA `report_date` separately from `recall_initiation_date`. The current
-  `recall_date` is correctly labeled “Recall initiated” in the interface.
-- Add an explicit, stable sort contract. The frontend does not claim results are
-  latest or newest.
-- Add total counts and cursor-based pagination. The current API provides only
-  `limit` and numeric `offset`, so the interface does not invent totals.
+- Deploy the implemented `reported_at`/`sort=newest` contract and run the
+  reviewed raw-S3 backfill before depending on newest ordering in production.
+- Evaluate cursor-based pagination beyond the current truthful
+  `X-Total-Count` plus numeric-offset contract as the dataset grows.
 - Add server-side classification filtering before offering a classification or
   “Most serious” control.
 - Add freshness metadata that tells consumers when source data was last

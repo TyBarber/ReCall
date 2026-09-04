@@ -2,6 +2,7 @@ import Form from "next/form";
 import Link from "next/link";
 
 import { SearchButton } from "@/components/search-button";
+import { SearchIcon } from "@/components/ui/search-icon";
 
 type SearchFormProps = {
   search?: string;
@@ -18,25 +19,26 @@ function searchHref(search: string, status: string): string {
   if (status) {
     params.set("status", status);
   }
-  const query = params.toString();
-  return `${query ? `/?${query}` : "/"}#current-recalls`;
+  params.set("page", "1");
+  return `/recalls?${params.toString()}#current-recalls`;
 }
 
 export function SearchForm({ search = "", status = "" }: SearchFormProps) {
   return (
-    <div className="command-search" id="recall-search">
+    <div className="command-search">
       <Form
         className="command-form"
-        action="/"
+        action="/recalls"
         role="search"
         aria-label="Search food recalls"
       >
+        <input name="page" type="hidden" value="1" />
         {status ? <input name="status" type="hidden" value={status} /> : null}
         <label className="command-label" htmlFor="search">
-          Search recalls
+          Search current recalls
         </label>
         <div className="command-bar">
-          <span className="command-icon" aria-hidden="true" />
+          <SearchIcon className="command-icon" />
           <input
             id="search"
             name="search"
@@ -71,7 +73,7 @@ export function SearchForm({ search = "", status = "" }: SearchFormProps) {
           })}
         </div>
         <div className="quick-searches" aria-label="Suggested searches">
-          <span className="support-label">Examples</span>
+          <span className="support-label">Try</span>
           {[
             ["Salmonella", "Salmonella"],
             ["Allergens", "allergen"],

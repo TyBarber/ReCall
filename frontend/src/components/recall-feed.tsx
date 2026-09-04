@@ -7,19 +7,21 @@ type RecallFeedProps = {
   recalls: Recall[];
   search?: string;
   status?: string;
-  offset: number;
+  currentPage: number;
   limit: number;
+  totalCount: number;
 };
 
 export function RecallFeed({
   recalls,
   search,
   status,
-  offset,
+  currentPage,
   limit,
+  totalCount,
 }: RecallFeedProps) {
   if (recalls.length === 0) {
-    return <EmptyState filtered={Boolean(search || status || offset)} />;
+    return <EmptyState filtered={Boolean(search || status || currentPage > 1)} />;
   }
 
   return (
@@ -30,11 +32,11 @@ export function RecallFeed({
         ))}
       </div>
       <Pagination
-        offset={offset}
+        currentPage={currentPage}
         limit={limit}
-        resultCount={recalls.length}
         search={search}
         status={status}
+        totalCount={totalCount}
       />
     </>
   );

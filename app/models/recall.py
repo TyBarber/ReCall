@@ -10,6 +10,10 @@ class RecallSource(StrEnum):
     FDA = "fda"
 
 
+class RecallSort(StrEnum):
+    NEWEST = "newest"
+
+
 class Recall(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -24,6 +28,7 @@ class Recall(BaseModel):
     severity: str | None = None
     status: str
     recall_date: date | None = None
+    reported_at: date | None = None
     distribution_pattern: str | None = None
     states: list[str] = Field(default_factory=list)
     upc_codes: list[str] = Field(default_factory=list)
@@ -31,4 +36,3 @@ class Recall(BaseModel):
     source_url: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-

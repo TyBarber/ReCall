@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getRecalls } from "@/lib/api/recalls";
+import { getRecallPage, getRecalls } from "@/lib/api/recalls";
 import { recallFixture } from "@/test/fixtures";
 
 describe("recall API client", () => {
@@ -16,7 +16,10 @@ describe("recall API client", () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify([recallFixture]), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Total-Count": "27",
+        },
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -24,6 +27,7 @@ describe("recall API client", () => {
     const result = await getRecalls({
       search: "  Salmonella  ",
       status: "Ongoing",
+      sort: "newest",
       limit: 5,
       offset: 10,
     });
@@ -33,8 +37,50 @@ describe("recall API client", () => {
     expect(url).toContain("source=fda");
     expect(url).toContain("search=Salmonella");
     expect(url).toContain("status=Ongoing");
+    expect(url).toContain("sort=newest");
     expect(url).toContain("limit=5");
     expect(url).toContain("offset=10");
+  });
+
+  it("returns truthful pagination metadata from response headers", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify([recallFixture]), {
+          status: 200,
+          headers: { "X-Total-Count": "25" },
+        }),
+      ),
+    );
+
+    await expect(getRecallPage({ limit: 12, offset: 24 })).resolves.toEqual({
+      recalls: [recallFixture],
+      totalCount: 25,
+    });
+  });
+
+  it("loads a simple recall list without requiring pagination headers", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify([recallFixture]), { status: 200 }),
+      ),
+    );
+
+    await expect(getRecalls({ limit: 4 })).resolves.toEqual([recallFixture]);
+  });
+
+  it("rejects missing or malformed pagination metadata", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify([recallFixture]), { status: 200 }),
+      ),
+    );
+
+    await expect(getRecallPage()).rejects.toThrow(
+      "The recall service did not provide valid pagination metadata.",
+    );
   });
 
   it("rejects malformed API data", async () => {

@@ -23,6 +23,11 @@ resource "aws_dynamodb_table" "recalls" {
     type = "S"
   }
 
+  attribute {
+    name = "reported_sort"
+    type = "S"
+  }
+
   global_secondary_index {
     name            = "source-recall-date-index"
     hash_key        = "source"
@@ -34,6 +39,13 @@ resource "aws_dynamodb_table" "recalls" {
     name            = "source-status-date-index"
     hash_key        = "source_status"
     range_key       = "recall_sort"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "source-reported-date-index"
+    hash_key        = "source"
+    range_key       = "reported_sort"
     projection_type = "ALL"
   }
 

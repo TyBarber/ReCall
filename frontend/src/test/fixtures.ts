@@ -12,6 +12,7 @@ export const recallFixture: Recall = {
   severity: null,
   status: "Ongoing",
   recall_date: "2026-07-14",
+  reported_at: "2026-08-19",
   distribution_pattern: "Distributed in select U.S. states.",
   states: ["NY", "PA"],
   upc_codes: ["20609055"],

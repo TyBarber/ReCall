@@ -30,6 +30,7 @@ Architecture decisions are documented in [`docs/architecture`](docs/architecture
 - FastAPI routes exposed locally or through API Gateway using Mangum
 - `GET /health`, `GET /recalls`, and `GET /recalls/{id}`
 - Search, source/status filtering, limit, and offset pagination
+- Separate recall-initiation and FDA-reporting dates with opt-in `sort=newest`
 - Structured JSON logging with ingestion, recall, source, message, and request identifiers
 - Terraform-managed IAM, logs, alarms, throttling, queues, storage, compute, API, and schedule
 - Responsive current-recall feed and recall detail pages in `frontend/`
@@ -88,6 +89,26 @@ npm run build
 ```
 
 Known frontend/backend contract limitations are tracked in [`docs/frontend-backend-contract-todos.md`](docs/frontend-backend-contract-todos.md).
+
+## FDA reported-date backfill
+
+Existing DynamoDB items require a one-time field-only backfill after the new
+GSI and application code are deployed. The script reads retained raw FDA record
+objects, chooses the newest archived copy per deterministic recall ID, and is a
+dry run unless `--execute` is supplied:
+
+```bash
+python scripts/backfill_fda_reported_at.py \
+  --bucket <raw-archive-bucket> \
+  --table-name <recalls-table> \
+  --prefix <reviewed-ingestion-prefix>
+```
+
+Review the candidate count and IDs before rerunning with `--execute`. The
+script updates only `reported_at`, `reported_sort`, and `updated_at`, verifies
+each write, safely reports already-backfilled records on repeat runs, and
+reports archived records that have no matching FDA item in DynamoDB without
+attempting a write.
 
 ## Build and validate AWS deployment
 

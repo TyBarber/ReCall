@@ -29,6 +29,7 @@ def sample_recall() -> Recall:
         classification="Class I",
         status="Ongoing",
         recall_date="2025-01-01",
+        reported_at="2025-01-03",
         distribution_pattern="Nationwide",
         upc_codes=["123456789012"],
         lot_numbers=["ABC-123"],
@@ -42,4 +43,3 @@ def client(repository, sample_recall):
     repository.upsert(sample_recall)
     with TestClient(create_app(repository)) as test_client:
         yield test_client
-

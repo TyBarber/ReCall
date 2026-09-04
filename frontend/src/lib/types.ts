@@ -10,6 +10,7 @@ export type Recall = {
   severity: string | null;
   status: string;
   recall_date: string | null;
+  reported_at: string | null;
   distribution_pattern: string | null;
   states: string[];
   upc_codes: string[];
@@ -24,4 +25,10 @@ export type RecallListParams = {
   status?: string;
   limit?: number;
   offset?: number;
+  sort?: "newest";
+};
+
+export type RecallPage = {
+  recalls: Recall[];
+  totalCount: number;
 };
