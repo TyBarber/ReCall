@@ -126,15 +126,31 @@ describe("recall API client", () => {
     });
   });
 
+  it("does not describe a missing list endpoint as a missing recall", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("missing", { status: 404 })),
+    );
+
+    await expect(getRecalls()).rejects.toMatchObject({
+      name: "RecallApiError",
+      message: "The recall service endpoint could not be found.",
+      status: 404,
+    });
+  });
+
   it("preserves a missing recall response for the detail route's 404 state", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(new Response("missing", { status: 404 })),
     );
 
-    await expect(getRecall("missing-recall")).rejects.toMatchObject({
-      name: "RecallApiError",
-      status: 404,
-    });
+    await expect(getRecall("missing-recall")).rejects.toMatchObject(
+      {
+        name: "RecallApiError",
+        message: "Recall not found.",
+        status: 404,
+      },
+    );
   });
 });

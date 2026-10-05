@@ -108,7 +108,10 @@ function validatedRecallList(data: unknown): Recall[] {
   return data;
 }
 
-async function request(path: string): Promise<ApiResponse> {
+async function request(
+  path: string,
+  options: { notFoundMessage?: string } = {},
+): Promise<ApiResponse> {
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}${path}`, { cache: "no-store" });
@@ -123,7 +126,8 @@ async function request(path: string): Promise<ApiResponse> {
   if (!response.ok) {
     throw new RecallApiError(
       response.status === 404
-        ? "Recall not found."
+        ? (options.notFoundMessage ??
+          "The recall service endpoint could not be found.")
         : "The recall service returned an unexpected response.",
       response.status,
     );
@@ -161,7 +165,9 @@ export async function getRecalls(
 }
 
 export const getRecall = cache(async (id: string): Promise<Recall> => {
-  const { data } = await request(`/recalls/${encodeURIComponent(id)}`);
+  const { data } = await request(`/recalls/${encodeURIComponent(id)}`, {
+    notFoundMessage: "Recall not found.",
+  });
   if (!isRecall(data)) {
     throw new RecallApiError("The recall service returned invalid recall data.");
   }
