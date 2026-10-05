@@ -23,7 +23,7 @@ class AWSIngestionResult:
     ingestion_id: str
     pages: int
     records: int
-    window_start: datetime
+    window_start: datetime | None
     window_end: datetime
 
 

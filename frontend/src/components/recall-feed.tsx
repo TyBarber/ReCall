@@ -7,6 +7,8 @@ type RecallFeedProps = {
   recalls: Recall[];
   search?: string;
   status?: string;
+  source?: Recall["source"];
+  recordType?: Recall["record_type"];
   currentPage: number;
   limit: number;
   totalCount: number;
@@ -16,12 +18,20 @@ export function RecallFeed({
   recalls,
   search,
   status,
+  source,
+  recordType,
   currentPage,
   limit,
   totalCount,
 }: RecallFeedProps) {
   if (recalls.length === 0) {
-    return <EmptyState filtered={Boolean(search || status || currentPage > 1)} />;
+    return (
+      <EmptyState
+        filtered={Boolean(
+          search || status || source || recordType || currentPage > 1,
+        )}
+      />
+    );
   }
 
   return (
@@ -36,6 +46,8 @@ export function RecallFeed({
         limit={limit}
         search={search}
         status={status}
+        source={source}
+        recordType={recordType}
         totalCount={totalCount}
       />
     </>

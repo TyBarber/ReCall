@@ -28,6 +28,18 @@ variable "schedule_expression" {
   default     = "rate(1 day)"
 }
 
+variable "fsis_schedule_expression" {
+  description = "EventBridge Scheduler expression for USDA FSIS ingestion."
+  type        = string
+  default     = "rate(1 day)"
+}
+
+variable "fsis_api_url" {
+  description = "Official USDA FSIS Recall API endpoint."
+  type        = string
+  default     = "https://www.fsis.usda.gov/fsis/api/recall/v/1"
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log retention."
   type        = number
@@ -104,6 +116,18 @@ variable "ingestion_max_records" {
   description = "Safety bound on FDA records fetched per scheduled invocation."
   type        = number
   default     = 1000
+}
+
+variable "fsis_ingestion_overlap_days" {
+  description = "Calendar-day overlap for the date-only FSIS modification cursor."
+  type        = number
+  default     = 1
+}
+
+variable "fsis_ingestion_max_records" {
+  description = "Safety bound on FSIS records selected from one snapshot."
+  type        = number
+  default     = 5000
 }
 
 variable "alarm_queue_age_seconds" {

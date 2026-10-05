@@ -15,6 +15,9 @@ def test_local_configuration_selects_sqlite(monkeypatch, tmp_path) -> None:
     settings = Settings.from_env()
     assert settings.repository_backend == RepositoryBackend.SQLITE
     assert isinstance(create_repository(settings), SQLiteRecallRepository)
+    assert settings.fsis_ingestion_overlap_days == 1
+    assert settings.fsis_ingestion_max_records == 5000
+    assert settings.fsis_api_url.endswith("/fsis/api/recall/v/1")
 
 
 def test_aws_configuration_selects_dynamodb(monkeypatch) -> None:

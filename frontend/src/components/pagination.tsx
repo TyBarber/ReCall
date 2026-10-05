@@ -1,10 +1,14 @@
 import Link from "next/link";
 
+import type { Recall } from "@/lib/types";
+
 type PaginationProps = {
   currentPage: number;
   limit: number;
   search?: string;
   status?: string;
+  source?: Recall["source"];
+  recordType?: Recall["record_type"];
   totalCount: number;
 };
 
@@ -46,10 +50,14 @@ function pageHref(
   page: number,
   search: string | undefined,
   status: string | undefined,
+  source: Recall["source"] | undefined,
+  recordType: Recall["record_type"] | undefined,
 ): string {
   const query = new URLSearchParams();
   if (search) query.set("search", search);
   if (status) query.set("status", status);
+  if (source) query.set("source", source);
+  if (recordType) query.set("record_type", recordType);
   query.set("page", String(page));
   return `/recalls?${query.toString()}#current-recalls`;
 }
@@ -89,6 +97,8 @@ export function Pagination({
   limit,
   search,
   status,
+  source,
+  recordType,
   totalCount,
 }: PaginationProps) {
   const totalPages = Math.ceil(totalCount / limit);
@@ -105,7 +115,7 @@ export function Pagination({
         <DirectionControl
           direction="Previous"
           disabled={currentPage === 1}
-          href={pageHref(currentPage - 1, search, status)}
+          href={pageHref(currentPage - 1, search, status, source, recordType)}
         />
 
         <div className="pagination-pages" aria-label="Choose a recall results page">
@@ -122,7 +132,7 @@ export function Pagination({
             ) : (
               <Link
                 className="page-number-link"
-                href={pageHref(item, search, status)}
+                href={pageHref(item, search, status, source, recordType)}
                 aria-label={`Page ${item}`}
                 key={item}
               >
@@ -135,7 +145,7 @@ export function Pagination({
         <DirectionControl
           direction="Next"
           disabled={currentPage === totalPages}
-          href={pageHref(currentPage + 1, search, status)}
+          href={pageHref(currentPage + 1, search, status, source, recordType)}
         />
       </div>
     </nav>

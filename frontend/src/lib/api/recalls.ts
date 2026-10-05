@@ -34,14 +34,38 @@ export function isRecall(value: unknown): value is Recall {
   const recall = value as Record<string, unknown>;
   return (
     typeof recall.id === "string" &&
-    recall.source === "fda" &&
+    (recall.source === "fda" || recall.source === "usda_fsis") &&
     typeof recall.source_recall_id === "string" &&
+    (recall.record_type === undefined ||
+      recall.record_type === "recall" ||
+      recall.record_type === "public_health_alert") &&
+    (recall.category === undefined || recall.category === "food") &&
     typeof recall.product_name === "string" &&
+    (recall.recalling_firm === undefined ||
+      recall.recalling_firm === null ||
+      typeof recall.recalling_firm === "string") &&
     typeof recall.recall_reason === "string" &&
     typeof recall.status === "string" &&
+    (recall.source_active === undefined ||
+      recall.source_active === null ||
+      typeof recall.source_active === "boolean") &&
+    (recall.source_archived === undefined ||
+      recall.source_archived === null ||
+      typeof recall.source_archived === "boolean") &&
     (recall.reported_at === undefined ||
       recall.reported_at === null ||
       typeof recall.reported_at === "string") &&
+    (recall.product_code_info === undefined ||
+      recall.product_code_info === null ||
+      typeof recall.product_code_info === "string") &&
+    (recall.source_updated_at === undefined ||
+      recall.source_updated_at === null ||
+      typeof recall.source_updated_at === "string") &&
+    (recall.product_items === undefined || isStringArray(recall.product_items)) &&
+    (recall.establishment_numbers === undefined ||
+      isStringArray(recall.establishment_numbers)) &&
+    (recall.source_documents === undefined ||
+      isStringArray(recall.source_documents)) &&
     isStringArray(recall.states) &&
     isStringArray(recall.upc_codes) &&
     isStringArray(recall.lot_numbers) &&
@@ -57,7 +81,9 @@ type ApiResponse = {
 
 function recallListPath(params: RecallListParams): string {
   const query = new URLSearchParams();
-  query.set("source", "fda");
+  if (params.source) {
+    query.set("source", params.source);
+  }
   query.set("limit", String(params.limit ?? 12));
   query.set("offset", String(params.offset ?? 0));
   if (params.search?.trim()) {
@@ -68,6 +94,9 @@ function recallListPath(params: RecallListParams): string {
   }
   if (params.sort) {
     query.set("sort", params.sort);
+  }
+  if (params.recordType) {
+    query.set("record_type", params.recordType);
   }
   return `/recalls?${query.toString()}`;
 }

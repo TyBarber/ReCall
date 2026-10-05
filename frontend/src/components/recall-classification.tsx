@@ -12,9 +12,11 @@ import {
 import { createPortal } from "react-dom";
 
 import { classificationTone, formatClassification } from "@/lib/format";
+import type { Recall } from "@/lib/types";
 
 type RecallClassificationProps = {
   classification: string | null;
+  source?: Recall["source"];
   variant?: "default" | "spotlight";
 };
 
@@ -37,7 +39,7 @@ const CLOSE_DELAY_MS = 120;
 const VIEWPORT_MARGIN_PX = 16;
 const POPOVER_GAP_PX = 10;
 
-const EXPLANATIONS: Record<string, Explanation> = {
+const FDA_EXPLANATIONS: Record<string, Explanation> = {
   "class-one": {
     heading: "Class I",
     primary: "Most serious classification.",
@@ -56,6 +58,27 @@ const EXPLANATIONS: Record<string, Explanation> = {
     primary: "Lower health risk.",
     description:
       "The recalled product is not likely to cause adverse health consequences, but it still does not meet FDA requirements.",
+  },
+};
+
+const USDA_FSIS_EXPLANATIONS: Record<string, Explanation> = {
+  "class-one": {
+    heading: "Class I",
+    primary: "Most serious classification.",
+    description:
+      "FSIS determines there is a reasonable probability that eating the food will cause health problems or death.",
+  },
+  "class-two": {
+    heading: "Class II",
+    primary: "Remote health risk.",
+    description:
+      "FSIS determines there is a remote probability of adverse health consequences from eating the food.",
+  },
+  "class-three": {
+    heading: "Class III",
+    primary: "No expected health consequences.",
+    description:
+      "FSIS determines that eating the food will not cause adverse health consequences.",
   },
 };
 
@@ -83,11 +106,13 @@ function InfoIcon() {
 
 export function RecallClassification({
   classification,
+  source = "fda",
   variant = "default",
 }: RecallClassificationProps) {
-  const label = formatClassification(classification);
+  const label = formatClassification(classification, source);
   const tone = classificationTone(classification);
-  const explanation = EXPLANATIONS[tone];
+  const explanation =
+    (source === "usda_fsis" ? USDA_FSIS_EXPLANATIONS : FDA_EXPLANATIONS)[tone];
   const popoverId = useId();
   const triggerRootRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -263,7 +288,9 @@ export function RecallClassification({
       {explanation.helper ? (
         <p className="classification-popover-helper">{explanation.helper}</p>
       ) : null}
-      <p className="classification-popover-source">FDA classification</p>
+      <p className="classification-popover-source">
+        {source === "usda_fsis" ? "USDA FSIS classification" : "FDA classification"}
+      </p>
     </motion.div>
   ) : null;
 

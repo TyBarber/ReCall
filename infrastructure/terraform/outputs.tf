@@ -27,3 +27,13 @@ output "ingestion_state_table_name" {
   description = "DynamoDB ingestion checkpoint table."
   value       = aws_dynamodb_table.ingestion_state.name
 }
+
+output "usda_fsis_ingestion_lambda_name" {
+  description = "USDA FSIS ingestion Lambda function name."
+  value       = aws_lambda_function.fsis_ingestion.function_name
+}
+
+output "usda_fsis_scheduler_dlq_url" {
+  description = "USDA FSIS EventBridge Scheduler dead-letter queue URL."
+  value       = aws_sqs_queue.fsis_scheduler_dlq.id
+}

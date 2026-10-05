@@ -13,6 +13,10 @@ describe("recall display formatting", () => {
     expect(formatClassification("Class III")).toBe("FDA Class III");
   });
 
+  it("formats USDA FSIS classification labels without using FDA branding", () => {
+    expect(formatClassification("Class I", "usda_fsis")).toBe("USDA Class I");
+  });
+
   it("formats a source date without timezone drift", () => {
     expect(formatRecallDate("2026-07-14")).toBe("July 14, 2026");
   });

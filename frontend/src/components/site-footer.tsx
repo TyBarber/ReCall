@@ -7,7 +7,7 @@ export function SiteFooter() {
           <p>Clear food recall information for everyday decisions.</p>
         </div>
         <p className="footer-trust">
-          Recall information is sourced from U.S. FDA enforcement data and may
+          Recall information is sourced from U.S. FDA and USDA FSIS data and may
           be updated as investigations develop.
         </p>
       </div>

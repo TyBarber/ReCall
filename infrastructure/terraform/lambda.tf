@@ -8,6 +8,11 @@ resource "aws_cloudwatch_log_group" "normalization" {
   retention_in_days = var.log_retention_days
 }
 
+resource "aws_cloudwatch_log_group" "fsis_ingestion" {
+  name              = "/aws/lambda/${local.fsis_ingestion_name}"
+  retention_in_days = var.log_retention_days
+}
+
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${local.api_name}"
   retention_in_days = var.log_retention_days
@@ -40,6 +45,34 @@ resource "aws_lambda_function" "ingestion" {
   }
 
   depends_on = [aws_cloudwatch_log_group.ingestion]
+}
+
+resource "aws_lambda_function" "fsis_ingestion" {
+  function_name    = local.fsis_ingestion_name
+  role             = aws_iam_role.fsis_ingestion.arn
+  runtime          = "python3.12"
+  architectures    = ["arm64"]
+  handler          = "app.aws.fsis_ingestion_handler.handler"
+  filename         = local.lambda_package
+  source_code_hash = filebase64sha256(local.lambda_package)
+  memory_size      = 512
+  timeout          = 120
+
+  environment {
+    variables = {
+      EXECUTION_ENVIRONMENT       = "aws"
+      REPOSITORY_BACKEND          = "dynamodb"
+      RAW_BUCKET_NAME             = aws_s3_bucket.raw.id
+      NORMALIZATION_QUEUE_URL     = aws_sqs_queue.normalization.id
+      INGESTION_STATE_TABLE_NAME  = aws_dynamodb_table.ingestion_state.name
+      FSIS_API_URL                = var.fsis_api_url
+      FSIS_INGESTION_OVERLAP_DAYS = tostring(var.fsis_ingestion_overlap_days)
+      FSIS_INGESTION_MAX_RECORDS  = tostring(var.fsis_ingestion_max_records)
+      LOG_LEVEL                   = "INFO"
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.fsis_ingestion]
 }
 
 resource "aws_lambda_function" "normalization" {

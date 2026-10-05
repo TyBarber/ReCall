@@ -7,8 +7,8 @@ const { getRecallPage } = vi.hoisted(() => ({ getRecallPage: vi.fn() }));
 
 vi.mock("@/lib/api/recalls", () => ({ getRecallPage }));
 vi.mock("@/components/search-form", () => ({
-  SearchForm: ({ search, status }: { search?: string; status?: string }) => (
-    <div data-testid="search-form">{`${search ?? ""}|${status ?? ""}`}</div>
+  SearchForm: ({ search, status, source, recordType }: { search?: string; status?: string; source?: string; recordType?: string }) => (
+    <div data-testid="search-form">{`${search ?? ""}|${status ?? ""}|${source ?? ""}|${recordType ?? ""}`}</div>
   ),
 }));
 vi.mock("@/components/recall-feed", () => ({
@@ -41,6 +41,8 @@ describe("RecallDirectory", () => {
         searchParams: Promise.resolve({
           search: "Salmonella",
           status: "Ongoing",
+          source: "usda_fsis",
+          record_type: "public_health_alert",
           page: "2",
         }),
       }),
@@ -49,11 +51,13 @@ describe("RecallDirectory", () => {
     expect(getRecallPage).toHaveBeenCalledWith({
       search: "Salmonella",
       status: "Ongoing",
+      source: "usda_fsis",
+      recordType: "public_health_alert",
       limit: 12,
       offset: 12,
     });
     expect(screen.getByTestId("search-form")).toHaveTextContent(
-      "Salmonella|Ongoing",
+      "Salmonella|Ongoing|usda_fsis|public_health_alert",
     );
     expect(screen.getByTestId("recall-feed")).toHaveTextContent("2|12|25");
   });

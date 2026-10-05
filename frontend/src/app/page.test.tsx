@@ -36,6 +36,9 @@ describe("Home", () => {
       }).closest("section"),
     ).toHaveAttribute("id", "how-it-works");
     expect(screen.getByText("Featured recalls")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Latest recalls & alerts" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Search" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Check" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Act" })).toBeInTheDocument();

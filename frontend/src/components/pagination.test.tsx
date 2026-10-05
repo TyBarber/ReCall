@@ -36,6 +36,8 @@ describe("Pagination", () => {
         limit={12}
         search="Salmonella"
         status="Ongoing"
+        source="usda_fsis"
+        recordType="public_health_alert"
         totalCount={156}
       />,
     );
@@ -43,15 +45,15 @@ describe("Pagination", () => {
     expect(screen.getByText("Page 6 of 13")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Previous" })).toHaveAttribute(
       "href",
-      "/recalls?search=Salmonella&status=Ongoing&page=5#current-recalls",
+      "/recalls?search=Salmonella&status=Ongoing&source=usda_fsis&record_type=public_health_alert&page=5#current-recalls",
     );
     expect(screen.getByRole("link", { name: "Next" })).toHaveAttribute(
       "href",
-      "/recalls?search=Salmonella&status=Ongoing&page=7#current-recalls",
+      "/recalls?search=Salmonella&status=Ongoing&source=usda_fsis&record_type=public_health_alert&page=7#current-recalls",
     );
     expect(screen.getByRole("link", { name: "Page 13" })).toHaveAttribute(
       "href",
-      "/recalls?search=Salmonella&status=Ongoing&page=13#current-recalls",
+      "/recalls?search=Salmonella&status=Ongoing&source=usda_fsis&record_type=public_health_alert&page=13#current-recalls",
     );
     expect(
       document.querySelector('[aria-current="page"]'),

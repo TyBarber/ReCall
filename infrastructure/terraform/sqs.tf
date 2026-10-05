@@ -29,3 +29,9 @@ resource "aws_sqs_queue" "scheduler_dlq" {
   message_retention_seconds = var.queue_message_retention_seconds
   sqs_managed_sse_enabled   = true
 }
+
+resource "aws_sqs_queue" "fsis_scheduler_dlq" {
+  name                      = "${local.fsis_ingestion_name}-scheduler-dlq"
+  message_retention_seconds = var.queue_message_retention_seconds
+  sqs_managed_sse_enabled   = true
+}

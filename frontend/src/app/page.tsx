@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Food safety, made clear",
   description:
-    "Search current U.S. FDA food enforcement recall information by product, company, reason, or UPC.",
+    "Search current U.S. FDA and USDA FSIS food safety information by product, company, reason, or identifier.",
 };
 
 export default async function Home() {
@@ -54,7 +54,7 @@ export default async function Home() {
             <HomeSearchForm />
             <p className="signal-trust-note">
               <span className="signal-trust-mark" aria-hidden="true" />
-              Recall information is sourced from U.S. FDA enforcement data and
+              Recall information is sourced from U.S. FDA and USDA FSIS data and
               may be updated as investigations develop.
             </p>
           </div>
@@ -66,9 +66,9 @@ export default async function Home() {
         <div className="shell recall-feed-inner">
           <div className="feed-heading">
             <div>
-              <h2>Newest recalls</h2>
+              <h2>Latest recalls &amp; alerts</h2>
               <p className="feed-copy">
-                Recently listed in FDA enforcement data.
+                Recently listed by FDA and USDA FSIS.
               </p>
             </div>
             <Link className="view-all-link" href="/recalls">
@@ -108,8 +108,8 @@ export default async function Home() {
             <p className="home-section-label">How it works</p>
             <h2 id="about-title">The facts you need, without the noise.</h2>
             <p>
-              ReCall makes public FDA enforcement data easier to search and
-              understand, so you can quickly check food in your home.
+              ReCall makes public FDA and USDA FSIS food safety data easier to
+              search and understand, so you can quickly check food in your home.
             </p>
             <Link href="/recalls">Browse the recall directory →</Link>
           </div>

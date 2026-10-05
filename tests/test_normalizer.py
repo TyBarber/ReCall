@@ -45,8 +45,10 @@ def test_normalizes_fda_record() -> None:
     recall = normalize_fda_record(external)
     assert recall.source_recall_id == "F-1000-2025"
     assert recall.brand == "Example Brand"
+    assert recall.recalling_firm == "Example Foods"
     assert recall.recall_date == date(2025, 1, 2)
     assert recall.reported_at == date(2025, 1, 5)
+    assert recall.product_code_info == "Lot: ABC-123"
     assert recall.upc_codes == ["987654321098", "123456789012"]
     assert recall.lot_numbers == ["ABC-123"]
 

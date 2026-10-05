@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { RecallCard } from "@/components/recall-card";
-import { recallFixture } from "@/test/fixtures";
+import { fsisAlertFixture, recallFixture } from "@/test/fixtures";
 
 describe("RecallCard", () => {
   it("uses consumer-safe labels and a clear detail action", () => {
@@ -26,10 +26,19 @@ describe("RecallCard", () => {
     ).toHaveAttribute("href", `/recalls/${recallFixture.id}`);
   });
 
-  it("handles a missing brand without leaving an empty label", () => {
+  it("uses the recalling firm when a separate brand is absent", () => {
     render(<RecallCard recall={{ ...recallFixture, brand: null }} />);
 
-    expect(screen.getByText("Company not reported")).toBeInTheDocument();
+    expect(screen.getByText("Kerry, Inc.")).toBeInTheDocument();
+  });
+
+  it("labels a USDA FSIS Public Health Alert without inventing a class", () => {
+    render(<RecallCard recall={fsisAlertFixture} />);
+
+    expect(screen.getByText("Public Health Alert")).toBeInTheDocument();
+    expect(screen.getByText("USDA FSIS")).toBeInTheDocument();
+    expect(screen.getByText("Published by USDA FSIS")).toBeInTheDocument();
+    expect(screen.queryByText(/Class I/)).not.toBeInTheDocument();
   });
 
   it("summarizes many states and omits facts that are not available", () => {

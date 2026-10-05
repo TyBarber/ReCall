@@ -10,13 +10,25 @@ from pydantic import ValidationError
 from app.aws.sqs_models import NormalizationMessage
 from app.config import Settings
 from app.ingestion.fda_schemas import FDAEnforcementRecord
-from app.ingestion.normalizer import normalize_fda_record
+from app.ingestion.fsis_schemas import FSISRecallRecord
+from app.ingestion.normalizer import normalize_fda_record, normalize_fsis_record
 from app.logging import configure_logging
+from app.models.recall import Recall
 from app.services.dynamodb_repository import DynamoDBRecallRepository
 from app.services.raw_archive import S3RawArchive
 from app.services.repository import RecallRepository
 
 logger = logging.getLogger(__name__)
+
+
+def normalize_source_record(source: str, raw: Any) -> Recall:
+    """Single dispatch boundary for source-specific schemas and normalizers."""
+
+    if source == "fda":
+        return normalize_fda_record(FDAEnforcementRecord.model_validate(raw))
+    if source == "usda_fsis":
+        return normalize_fsis_record(FSISRecallRecord.model_validate(raw))
+    raise LookupError(f"Unsupported normalization source: {source}")
 
 
 def process_normalization_event(
@@ -38,7 +50,7 @@ def process_normalization_event(
             )
             failures.append({"itemIdentifier": message_id})
             continue
-        if message.source != "fda":
+        if message.source not in {"fda", "usda_fsis"}:
             logger.error(
                 "Unsupported normalization source",
                 extra={"sqs_message_id": message_id, "source": message.source, "ingestion_id": message.ingestion_id},
@@ -50,11 +62,10 @@ def process_normalization_event(
                 bucket=message.raw_record.bucket,
                 key=message.raw_record.key,
             )
-            external = FDAEnforcementRecord.model_validate(raw)
-            recall = normalize_fda_record(external)
+            recall = normalize_source_record(message.source, raw)
         except (ValidationError, ValueError, TypeError) as exc:
             logger.warning(
-                "Malformed FDA record acknowledged",
+                "Malformed source record acknowledged",
                 extra={
                     "sqs_message_id": message_id,
                     "ingestion_id": message.ingestion_id,

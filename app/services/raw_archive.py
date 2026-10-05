@@ -18,7 +18,7 @@ class S3RawArchive:
             f"ingestion_id={ingestion_id}"
         )
 
-    def _put(self, key: str, payload: dict[str, Any]) -> str | None:
+    def _put(self, key: str, payload: Any) -> str | None:
         response = self.client.put_object(
             Bucket=self.bucket,
             Key=key,
@@ -36,7 +36,7 @@ class S3RawArchive:
         ingestion_id: str,
         fetched_at: datetime,
         page_number: int,
-        payload: dict[str, Any],
+        payload: Any,
     ) -> str:
         key = f"{self.prefix(source, ingestion_id, fetched_at)}/pages/page-{page_number:04d}.json"
         self._put(key, payload)
@@ -71,6 +71,6 @@ class S3RawArchive:
         self._put(key, payload)
         return key
 
-    def read_json(self, *, bucket: str, key: str) -> dict[str, Any]:
+    def read_json(self, *, bucket: str, key: str) -> Any:
         response = self.client.get_object(Bucket=bucket, Key=key)
         return json.loads(response["Body"].read())

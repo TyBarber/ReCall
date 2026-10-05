@@ -1,3 +1,5 @@
+import type { Recall } from "@/lib/types";
+
 const MONTH_DAY_YEAR = new Intl.DateTimeFormat("en-US", {
   month: "long",
   day: "numeric",
@@ -16,13 +18,32 @@ export function formatRecallDate(value: string | null): string {
     : MONTH_DAY_YEAR.format(parsed);
 }
 
-export function formatClassification(value: string | null): string | null {
+export function sourceShortName(source: Recall["source"]): string {
+  return source === "usda_fsis" ? "USDA FSIS" : "FDA";
+}
+
+export function sourceFullName(source: Recall["source"]): string {
+  return source === "usda_fsis"
+    ? "U.S. Department of Agriculture FSIS"
+    : "U.S. FDA enforcement data";
+}
+
+export function reportedDateLabel(source: Recall["source"]): string {
+  return source === "usda_fsis" ? "Published by USDA FSIS" : "Listed by FDA";
+}
+
+export function formatClassification(
+  value: string | null,
+  source: Recall["source"] = "fda",
+): string | null {
   if (!value) {
     return null;
   }
 
   const match = value.match(/class\s*(i{1,3})/i);
-  return match ? `FDA Class ${match[1].toUpperCase()}` : value;
+  return match
+    ? `${source === "usda_fsis" ? "USDA" : "FDA"} Class ${match[1].toUpperCase()}`
+    : value;
 }
 
 export function classificationTone(value: string | null): string {

@@ -26,6 +26,9 @@ class Settings:
     first_run_lookback_days: int
     ingestion_page_size: int
     ingestion_max_records: int
+    fsis_api_url: str
+    fsis_ingestion_overlap_days: int
+    fsis_ingestion_max_records: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -45,6 +48,16 @@ class Settings:
             first_run_lookback_days=int(os.getenv("FIRST_RUN_LOOKBACK_DAYS", "60")),
             ingestion_page_size=int(os.getenv("INGESTION_PAGE_SIZE", "100")),
             ingestion_max_records=int(os.getenv("INGESTION_MAX_RECORDS", "1000")),
+            fsis_api_url=os.getenv(
+                "FSIS_API_URL",
+                "https://www.fsis.usda.gov/fsis/api/recall/v/1",
+            ),
+            fsis_ingestion_overlap_days=int(
+                os.getenv("FSIS_INGESTION_OVERLAP_DAYS", "1")
+            ),
+            fsis_ingestion_max_records=int(
+                os.getenv("FSIS_INGESTION_MAX_RECORDS", "5000")
+            ),
         )
 
     def require(self, field_name: str) -> str:

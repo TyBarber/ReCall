@@ -26,6 +26,20 @@ resource "aws_cloudwatch_metric_alarm" "normalization_errors" {
   dimensions          = { FunctionName = aws_lambda_function.normalization.function_name }
 }
 
+resource "aws_cloudwatch_metric_alarm" "fsis_ingestion_errors" {
+  alarm_name          = "${local.fsis_ingestion_name}-errors"
+  alarm_description   = "USDA FSIS ingestion Lambda reported an error."
+  namespace           = "AWS/Lambda"
+  metric_name         = "Errors"
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  dimensions          = { FunctionName = aws_lambda_function.fsis_ingestion.function_name }
+}
+
 resource "aws_cloudwatch_metric_alarm" "api_errors" {
   alarm_name          = "${local.api_name}-errors"
   alarm_description   = "API Lambda reported an error."
@@ -94,4 +108,18 @@ resource "aws_cloudwatch_metric_alarm" "normalization_throttles" {
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "notBreaching"
   dimensions          = { FunctionName = aws_lambda_function.normalization.function_name }
+}
+
+resource "aws_cloudwatch_metric_alarm" "fsis_scheduler_dlq_depth" {
+  alarm_name          = "${local.fsis_ingestion_name}-scheduler-dlq-depth"
+  alarm_description   = "EventBridge Scheduler could not deliver a USDA FSIS ingestion invocation."
+  namespace           = "AWS/SQS"
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  statistic           = "Maximum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  dimensions          = { QueueName = aws_sqs_queue.fsis_scheduler_dlq.name }
 }

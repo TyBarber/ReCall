@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s | ReCall",
   },
   description:
-    "Clear, searchable U.S. FDA food enforcement recall information for consumers.",
+    "Clear, searchable U.S. FDA and USDA FSIS food safety information for consumers.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

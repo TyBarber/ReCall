@@ -4,6 +4,7 @@ import { RecallClassification } from "@/components/recall-classification";
 import {
   classificationTone,
   formatRecallDate,
+  reportedDateLabel,
 } from "@/lib/format";
 import type { Recall } from "@/lib/types";
 
@@ -14,8 +15,10 @@ type RecallSpotlightProps = {
 function statusTone(status: string): string {
   switch (status.trim().toLowerCase()) {
     case "ongoing":
+    case "active recall":
       return "ongoing";
     case "completed":
+    case "closed recall":
       return "completed";
     case "terminated":
       return "terminated";
@@ -50,19 +53,26 @@ export function RecallSpotlight({ recalls }: RecallSpotlightProps) {
                   <header className="spotlight-header">
                     <RecallClassification
                       classification={recall.classification}
+                      source={recall.source}
                       variant="spotlight"
                     />
-                    <span
-                      className={`spotlight-status spotlight-status-${statusTone(recall.status)}`}
-                    >
+                    {recall.record_type === "public_health_alert" ? (
+                      <span className="record-type-badge">Public Health Alert</span>
+                    ) : null}
+                    {recall.record_type !== "public_health_alert" ||
+                    recall.status !== "Public Health Alert" ? (
                       <span
-                        className="spotlight-status-mark"
-                        aria-hidden="true"
+                        className={`spotlight-status spotlight-status-${statusTone(recall.status)}`}
                       >
-                        <i />
+                        <span
+                          className="spotlight-status-mark"
+                          aria-hidden="true"
+                        >
+                          <i />
+                        </span>
+                        {recall.status}
                       </span>
-                      {recall.status}
-                    </span>
+                    ) : null}
                   </header>
 
                   <div className="spotlight-product">
@@ -78,7 +88,9 @@ export function RecallSpotlight({ recalls }: RecallSpotlightProps) {
                   <div className="spotlight-meta">
                     {recall.reported_at || recall.recall_date ? (
                       <span>
-                        {recall.reported_at ? "Listed by FDA" : "Recall started"}{" "}
+                        {recall.reported_at
+                          ? reportedDateLabel(recall.source)
+                          : "Recall started"}{" "}
                         {formatRecallDate(
                           recall.reported_at || recall.recall_date,
                         )}

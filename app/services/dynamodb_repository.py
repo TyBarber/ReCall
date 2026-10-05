@@ -6,7 +6,7 @@ from typing import Any
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from app.models.recall import Recall, RecallSort, RecallSource
+from app.models.recall import Recall, RecallRecordType, RecallSort, RecallSource
 from app.services.repository import UpsertResult
 
 
@@ -64,7 +64,13 @@ class DynamoDBRecallRepository:
         return self._from_item(item) if item else None
 
     def _newest_by_source(
-        self, *, source: RecallSource, limit: int, offset: int
+        self,
+        *,
+        source: RecallSource,
+        status: str | None,
+        record_type: RecallRecordType | None,
+        limit: int,
+        offset: int,
     ) -> list[Recall]:
         target_count = offset + limit
         recalls: list[Recall] = []
@@ -76,9 +82,13 @@ class DynamoDBRecallRepository:
         }
         while len(recalls) < target_count:
             response = self.table.query(**kwargs)
-            recalls.extend(
-                self._from_item(item) for item in response.get("Items", [])
-            )
+            for item in response.get("Items", []):
+                recall = self._from_item(item)
+                if status is not None and recall.status.casefold() != status.casefold():
+                    continue
+                if record_type is not None and recall.record_type != record_type:
+                    continue
+                recalls.append(recall)
             last_key = response.get("LastEvaluatedKey")
             if not last_key:
                 break
@@ -92,6 +102,7 @@ class DynamoDBRecallRepository:
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        record_type: RecallRecordType | None = None,
         sort: RecallSort | None = None,
     ) -> list[Recall]:
         recalls: list[Recall] = []
@@ -135,6 +146,7 @@ class DynamoDBRecallRepository:
             for recall in recalls
             if (source is None or recall.source == source)
             and (status_value is None or recall.status.casefold() == status_value)
+            and (record_type is None or recall.record_type == record_type)
             and (search_value is None or search_value in recall.model_dump_json().casefold())
         ]
         date_field = (
@@ -158,9 +170,15 @@ class DynamoDBRecallRepository:
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        record_type: RecallRecordType | None = None,
     ) -> int:
         return len(
-            self._matching_recalls(search=search, source=source, status=status)
+            self._matching_recalls(
+                search=search,
+                source=source,
+                status=status,
+                record_type=record_type,
+            )
         )
 
     def list(
@@ -169,6 +187,7 @@ class DynamoDBRecallRepository:
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        record_type: RecallRecordType | None = None,
         sort: RecallSort | None = None,
         limit: int = 100,
         offset: int = 0,
@@ -177,12 +196,19 @@ class DynamoDBRecallRepository:
             sort == RecallSort.NEWEST
             and search is None
             and source is not None
-            and status is None
         ):
             return self._newest_by_source(
-                source=source, limit=limit, offset=offset
+                source=source,
+                status=status,
+                record_type=record_type,
+                limit=limit,
+                offset=offset,
             )
         filtered = self._matching_recalls(
-            search=search, source=source, status=status, sort=sort
+            search=search,
+            source=source,
+            status=status,
+            record_type=record_type,
+            sort=sort,
         )
         return filtered[offset : offset + limit]

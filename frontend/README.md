@@ -9,7 +9,7 @@ recall API; it does not duplicate or modify backend behavior.
 Node.js 20 or newer is required.
 
 ```bash
-cd /Users/tybarber/Desktop/ReCall/frontend
+cd frontend
 npm install
 cp .env.example .env.local
 npm run dev

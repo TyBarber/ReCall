@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { RecallSpotlight } from "@/components/recall-spotlight";
-import { recallFixture } from "@/test/fixtures";
+import { fsisAlertFixture, recallFixture } from "@/test/fixtures";
 
 const recalls = [
   recallFixture,
@@ -89,6 +89,15 @@ describe("RecallSpotlight", () => {
     expect(
       within(card).getByText(/Listed by FDA August 19, 2026/),
     ).toBeInTheDocument();
+  });
+
+  it("labels a featured Public Health Alert without fabricating a class", () => {
+    render(<RecallSpotlight recalls={[fsisAlertFixture]} />);
+    const card = screen.getByRole("article");
+
+    expect(within(card).getByText("Public Health Alert")).toBeInTheDocument();
+    expect(within(card).queryByText(/FDA Class|USDA FSIS Class/)).not.toBeInTheDocument();
+    expect(within(card).queryAllByText("Public Health Alert")).toHaveLength(1);
   });
 
   it("renders nothing when no live recall data is available", () => {

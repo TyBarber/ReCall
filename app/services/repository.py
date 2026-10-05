@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from app.models.recall import Recall, RecallSort, RecallSource
+from app.models.recall import Recall, RecallRecordType, RecallSort, RecallSource
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +21,7 @@ class RecallRepository(Protocol):
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        record_type: RecallRecordType | None = None,
     ) -> int: ...
     def list(
         self,
@@ -28,6 +29,7 @@ class RecallRepository(Protocol):
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        record_type: RecallRecordType | None = None,
         sort: RecallSort | None = None,
         limit: int = 100,
         offset: int = 0,

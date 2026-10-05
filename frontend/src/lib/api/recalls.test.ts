@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getRecallPage, getRecalls } from "@/lib/api/recalls";
+import {
+  getRecall,
+  getRecallPage,
+  getRecalls,
+  isRecall,
+} from "@/lib/api/recalls";
 import { recallFixture } from "@/test/fixtures";
 
 describe("recall API client", () => {
@@ -28,6 +33,8 @@ describe("recall API client", () => {
       search: "  Salmonella  ",
       status: "Ongoing",
       sort: "newest",
+      source: "fda",
+      recordType: "recall",
       limit: 5,
       offset: 10,
     });
@@ -35,6 +42,7 @@ describe("recall API client", () => {
     expect(result).toEqual([recallFixture]);
     const url = String(fetchMock.mock.calls[0][0]);
     expect(url).toContain("source=fda");
+    expect(url).toContain("record_type=recall");
     expect(url).toContain("search=Salmonella");
     expect(url).toContain("status=Ongoing");
     expect(url).toContain("sort=newest");
@@ -68,6 +76,7 @@ describe("recall API client", () => {
     );
 
     await expect(getRecalls({ limit: 4 })).resolves.toEqual([recallFixture]);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).not.toContain("source=");
   });
 
   it("rejects missing or malformed pagination metadata", async () => {
@@ -96,6 +105,15 @@ describe("recall API client", () => {
     );
   });
 
+  it("accepts legacy records without optional FDA code information", () => {
+    const legacyRecall = { ...recallFixture };
+    delete legacyRecall.product_code_info;
+    delete legacyRecall.recalling_firm;
+
+    expect(isRecall(legacyRecall)).toBe(true);
+    expect(isRecall({ ...recallFixture, product_code_info: [] })).toBe(false);
+  });
+
   it("surfaces API failures", async () => {
     vi.stubGlobal(
       "fetch",
@@ -105,6 +123,18 @@ describe("recall API client", () => {
     await expect(getRecalls()).rejects.toMatchObject({
       name: "RecallApiError",
       status: 503,
+    });
+  });
+
+  it("preserves a missing recall response for the detail route's 404 state", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("missing", { status: 404 })),
+    );
+
+    await expect(getRecall("missing-recall")).rejects.toMatchObject({
+      name: "RecallApiError",
+      status: 404,
     });
   });
 });

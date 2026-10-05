@@ -1,40 +1,43 @@
 # ReCall
 
-ReCall ingests official U.S. food enforcement recalls, preserves their raw source data, normalizes them, exposes a FastAPI read API, and provides a consumer-facing recall finder.
+ReCall ingests official U.S. food safety records, preserves their raw source data, normalizes them, exposes a FastAPI read API, and provides a consumer-facing recall finder.
 
 Milestone 2 adds an entirely Terraform-managed AWS serverless deployment while preserving the Milestone 1 SQLite workflow. Milestone 3A adds the local Next.js consumer interface without changing the deployed backend.
 
 ## Architecture
 
 ```text
-EventBridge Scheduler -> FDA ingestion Lambda -> S3 raw archive
-                                             -> SQS normalization queue
-                                                -> normalization Lambda
-                                                   -> DynamoDB recalls
+EventBridge Scheduler -> FDA ingestion Lambda ------┐
+                      -> USDA FSIS ingestion Lambda ├-> S3 raw archive
+                                                   └-> SQS normalization queue
+                                                       -> normalization Lambda
+                                                          -> DynamoDB recalls
 
 API Gateway HTTP API -> FastAPI/Mangum Lambda -> DynamoDB recalls
 ```
 
-The ingestion Lambda uses a separate DynamoDB checkpoint table. Each successful run queries FDA `report_date` from the previous successful timestamp minus a configurable overlap. The checkpoint advances only after archival, queue publication, and manifest creation all complete. Development uses a configurable 60-day first-run lookback and a 60-minute regular overlap.
+Each ingestion source uses the separate DynamoDB checkpoint table under its own source key. FDA queries `report_date` with a 60-minute overlap. On its first successful run, USDA FSIS imports the complete available English history, including historical records with no `field_last_modified_date`. Later runs select only records whose `field_last_modified_date` falls inclusively between the prior successful checkpoint minus one calendar day and the current run date; rows without that field are excluded from daily republishing. A checkpoint advances only after archival, queue publication, and manifest creation all complete.
 
 Architecture decisions are documented in [`docs/architecture`](docs/architecture/README.md).
 
 ## What works
 
 - Paginated and checkpointed openFDA food-enforcement ingestion
+- Checkpointed USDA FSIS recall and Public Health Alert ingestion
 - Complete raw response pages, individual records, and manifests archived in S3
 - SQS decoupling with a DLQ and record-level partial batch failure responses
 - Separate FDA validation schemas and normalized internal Recall model
+- Source-specific FDA and USDA FSIS schemas/normalizers behind one dispatch boundary
 - Idempotent SQLite and DynamoDB repository adapters
 - Environment-based local/AWS repository selection
 - FastAPI routes exposed locally or through API Gateway using Mangum
 - `GET /health`, `GET /recalls`, and `GET /recalls/{id}`
-- Search, source/status filtering, limit, and offset pagination
-- Separate recall-initiation and FDA-reporting dates with opt-in `sort=newest`
+- Unified search, FDA/USDA FSIS source, exact source-status, record-type, limit, and offset filtering/pagination
+- Source-correct initiation/publication dates with bounded cross-source `sort=newest`
 - Structured JSON logging with ingestion, recall, source, message, and request identifiers
 - Terraform-managed IAM, logs, alarms, throttling, queues, storage, compute, API, and schedule
 - Responsive current-recall feed and recall detail pages in `frontend/`
-- Search by product, company/brand, recall reason, or UPC, verified against the development API
+- Search across normalized product, company/brand, reason, package, and source identifier fields
 - Frontend loading, empty, error, not-found, and pagination states
 
 ## Local setup
@@ -110,6 +113,24 @@ each write, safely reports already-backfilled records on repeat runs, and
 reports archived records that have no matching FDA item in DynamoDB without
 attempting a write.
 
+## FDA detail-field backfill
+
+After deploying normalization support for `recalling_firm` and
+`product_code_info`, existing DynamoDB items can be updated from a reviewed raw
+S3 ingestion prefix. The command is a dry run unless `--execute` is supplied:
+
+```bash
+python -m scripts.backfill_fda_detail_fields \
+  --bucket <raw-archive-bucket> \
+  --table-name <recalls-table> \
+  --prefix <reviewed-ingestion-prefix>
+```
+
+The script derives each existing deterministic recall ID, conditionally updates
+only the two detail fields and `updated_at`, verifies each write, and never
+deletes records. Review all missing-item, source-mismatch, and failure counts
+before using `--execute`.
+
 ## Build and validate AWS deployment
 
 The Lambda artifact is built before Terraform operations:
@@ -124,7 +145,7 @@ terraform -chdir=infrastructure/terraform plan -out=recall-dev.tfplan
 
 Copy `infrastructure/terraform/terraform.tfvars.example` to an untracked environment-specific `.tfvars` file if overriding defaults. Review the plan before any apply. Milestone 2 implementation and validation do not run `terraform apply`.
 
-Important AWS environment variables are supplied by Terraform: `EXECUTION_ENVIRONMENT`, `REPOSITORY_BACKEND`, `AWS_REGION`, `DYNAMODB_TABLE_NAME`, `INGESTION_STATE_TABLE_NAME`, `RAW_BUCKET_NAME`, `NORMALIZATION_QUEUE_URL`, and ingestion-window settings.
+Important AWS environment variables are supplied by Terraform: `EXECUTION_ENVIRONMENT`, `REPOSITORY_BACKEND`, `AWS_REGION`, `DYNAMODB_TABLE_NAME`, `INGESTION_STATE_TABLE_NAME`, `RAW_BUCKET_NAME`, `NORMALIZATION_QUEUE_URL`, and ingestion-window settings. The USDA FSIS schedule is initially disabled so its first complete-history import can be invoked and validated manually before scheduling is enabled in a separately reviewed Terraform change.
 
 ## Security and operations
 

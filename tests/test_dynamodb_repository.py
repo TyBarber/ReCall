@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.models.recall import RecallSort
+from app.models.recall import RecallRecordType, RecallSort
 from app.services.dynamodb_repository import DynamoDBRecallRepository
 
 
@@ -103,3 +103,24 @@ def test_dynamodb_newest_uses_reported_date_and_new_gsi(sample_recall) -> None:
     assert table.query_calls[-1]["IndexName"] == "source-reported-date-index"
     assert table.query_calls[-1]["ScanIndexForward"] is False
     assert table.query_calls[-1]["Limit"] == 2
+
+
+def test_dynamodb_record_type_filter_applies_to_list_and_count(sample_recall) -> None:
+    table = FakeTable()
+    repository = DynamoDBRecallRepository(table)
+    repository.upsert(sample_recall)
+    repository.upsert(
+        sample_recall.model_copy(
+            update={
+                "id": "fsis-alert",
+                "source_recall_id": "PHA-1",
+                "record_type": RecallRecordType.PUBLIC_HEALTH_ALERT,
+                "status": "Public Health Alert",
+            }
+        )
+    )
+
+    alerts = repository.list(record_type=RecallRecordType.PUBLIC_HEALTH_ALERT)
+
+    assert [recall.id for recall in alerts] == ["fsis-alert"]
+    assert repository.count(record_type=RecallRecordType.PUBLIC_HEALTH_ALERT) == 1

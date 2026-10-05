@@ -2,7 +2,12 @@ import Link from "next/link";
 
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
-import { classificationTone, formatRecallDate } from "@/lib/format";
+import {
+  classificationTone,
+  formatRecallDate,
+  reportedDateLabel,
+  sourceShortName,
+} from "@/lib/format";
 import type { Recall } from "@/lib/types";
 
 type RecallCardProps = {
@@ -22,7 +27,10 @@ function distributionSummary(recall: Recall): string | null {
 }
 
 function codeSummary(recall: Recall): string | null {
-  const total = recall.upc_codes.length + recall.lot_numbers.length;
+  const total =
+    recall.upc_codes.length +
+    recall.lot_numbers.length +
+    (recall.establishment_numbers?.length ?? 0);
 
   if (total === 0) {
     return null;
@@ -42,11 +50,23 @@ export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
       className={`recall-card recall-card-${tone}${isPreview ? " recall-card-preview" : ""}`}
     >
       <div className="card-signals" aria-label="Recall classification and status">
-        <RecallClassification classification={recall.classification} />
-        <StatusBadge status={recall.status} />
+        {recall.record_type === "public_health_alert" ? (
+          <span className="record-type-badge">Public Health Alert</span>
+        ) : null}
+        <RecallClassification
+          classification={recall.classification}
+          source={recall.source}
+        />
+        {recall.record_type !== "public_health_alert" ||
+        recall.status !== "Public Health Alert" ? (
+          <StatusBadge status={recall.status} />
+        ) : null}
       </div>
       <div className="card-heading">
-        <p className="card-company">{recall.brand || "Company not reported"}</p>
+        <p className="card-source">{sourceShortName(recall.source)}</p>
+        <p className="card-company">
+          {recall.recalling_firm || recall.brand || "Company not reported"}
+        </p>
         <h3>{recall.product_name}</h3>
       </div>
       <div className="card-reason">
@@ -57,7 +77,11 @@ export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
         <dl className="card-quick-facts" aria-label="Recall quick facts">
           {displayDate ? (
             <div>
-              <dt>{recall.reported_at ? "Listed by FDA" : "Recall started"}</dt>
+              <dt>
+                {recall.reported_at
+                  ? reportedDateLabel(recall.source)
+                  : "Recall started"}
+              </dt>
               <dd>{formatRecallDate(displayDate)}</dd>
             </div>
           ) : null}
@@ -69,7 +93,11 @@ export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
           ) : null}
           {codes ? (
             <div className="fact-codes">
-              <dt>Product codes reported by FDA</dt>
+              <dt>
+                {recall.source === "fda"
+                  ? "Product codes reported by FDA"
+                  : "Product identifiers reported by USDA FSIS"}
+              </dt>
               <dd>{codes}</dd>
             </div>
           ) : null}

@@ -3,6 +3,16 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 *.egg-info/
+
+# Local configuration and credentials
+.env*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+
 data/
 *.db
 build/

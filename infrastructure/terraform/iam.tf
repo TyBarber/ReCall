@@ -45,6 +45,41 @@ resource "aws_iam_role_policy" "ingestion" {
   })
 }
 
+resource "aws_iam_role" "fsis_ingestion" {
+  name               = "${local.fsis_ingestion_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+}
+
+resource "aws_iam_role_policy" "fsis_ingestion" {
+  name = "${local.fsis_ingestion_name}-policy"
+  role = aws_iam_role.fsis_ingestion.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "${aws_cloudwatch_log_group.fsis_ingestion.arn}:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
+        Resource = "${aws_s3_bucket.raw.arn}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
+        Resource = aws_sqs_queue.normalization.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+        Resource = aws_dynamodb_table.ingestion_state.arn
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role" "normalization" {
   name               = "${local.normalization_name}-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
@@ -148,6 +183,31 @@ resource "aws_iam_role_policy" "scheduler" {
         Effect   = "Allow"
         Action   = ["sqs:SendMessage"]
         Resource = aws_sqs_queue.scheduler_dlq.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "fsis_scheduler" {
+  name               = "${local.fsis_ingestion_name}-scheduler-role"
+  assume_role_policy = data.aws_iam_policy_document.scheduler_assume.json
+}
+
+resource "aws_iam_role_policy" "fsis_scheduler" {
+  name = "${local.fsis_ingestion_name}-scheduler-policy"
+  role = aws_iam_role.fsis_scheduler.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunction"]
+        Resource = aws_lambda_function.fsis_ingestion.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
+        Resource = aws_sqs_queue.fsis_scheduler_dlq.arn
       }
     ]
   })

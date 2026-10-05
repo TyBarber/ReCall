@@ -6,3 +6,5 @@
 - [ADR 004: DynamoDB for normalized recalls](004-dynamodb-recalls.md)
 - [ADR 005: DynamoDB search and pagination limits](005-dynamodb-search-pagination.md)
 - [ADR 006: Checkpoint overlap window](006-checkpoint-overlap.md)
+- [ADR 007: Reported-date ordering](007-reported-date-ordering.md)
+- [ADR 008: USDA FSIS integration](008-usda-fsis-integration.md)

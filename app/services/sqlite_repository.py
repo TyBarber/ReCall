@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.models.recall import Recall, RecallSort, RecallSource
+from app.models.recall import Recall, RecallRecordType, RecallSort, RecallSource
 from app.services.repository import UpsertResult
 
 
@@ -77,6 +77,7 @@ class SQLiteRecallRepository:
         search: str | None,
         source: RecallSource | None,
         status: str | None,
+        record_type: RecallRecordType | None,
     ) -> tuple[str, list[Any]]:
         clauses: list[str] = []
         parameters: list[Any] = []
@@ -89,6 +90,11 @@ class SQLiteRecallRepository:
         if status:
             clauses.append("LOWER(json_extract(document, '$.status')) = ?")
             parameters.append(status.lower())
+        if record_type:
+            clauses.append(
+                "COALESCE(json_extract(document, '$.record_type'), 'recall') = ?"
+            )
+            parameters.append(record_type.value)
         where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
         return where, parameters
 
@@ -98,9 +104,13 @@ class SQLiteRecallRepository:
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        record_type: RecallRecordType | None = None,
     ) -> int:
         where, parameters = self._filters(
-            search=search, source=source, status=status
+            search=search,
+            source=source,
+            status=status,
+            record_type=record_type,
         )
         row = self._connection.execute(
             f"SELECT COUNT(*) AS total FROM recalls{where}", parameters
@@ -113,16 +123,20 @@ class SQLiteRecallRepository:
         search: str | None = None,
         source: RecallSource | None = None,
         status: str | None = None,
+        record_type: RecallRecordType | None = None,
         sort: RecallSort | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Recall]:
         where, parameters = self._filters(
-            search=search, source=source, status=status
+            search=search,
+            source=source,
+            status=status,
+            record_type=record_type,
         )
         parameters.extend([limit, offset])
         order_by = (
-            "json_extract(document, '$.reported_at') DESC, id"
+            "json_extract(document, '$.reported_at') DESC, id DESC"
             if sort == RecallSort.NEWEST
             else "json_extract(document, '$.recall_date') DESC, id"
         )

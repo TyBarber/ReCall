@@ -5,10 +5,12 @@ type StatusBadgeProps = {
 function statusTone(status: string): string {
   switch (status.trim().toLowerCase()) {
     case "ongoing":
+    case "active recall":
       return "ongoing";
     case "terminated":
       return "terminated";
     case "completed":
+    case "closed recall":
       return "completed";
     default:
       return "neutral";

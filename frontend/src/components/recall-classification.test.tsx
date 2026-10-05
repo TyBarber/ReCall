@@ -133,6 +133,24 @@ describe("RecallClassification", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
+  it("uses official USDA FSIS classification labeling and explanation", () => {
+    render(
+      <RecallClassification classification="Class II" source="usda_fsis" />,
+    );
+    const trigger = screen.getByRole("button", {
+      name: "Learn what Class II means",
+    });
+
+    expect(screen.getByText("USDA Class II")).toBeVisible();
+    fireEvent.click(trigger);
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "remote probability of adverse health consequences",
+    );
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "USDA FSIS classification",
+    );
+  });
+
   it("renders nothing when classification is absent", () => {
     const { container } = render(
       <RecallClassification classification={null} />,

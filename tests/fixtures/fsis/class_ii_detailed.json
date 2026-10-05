@@ -1,0 +1,27 @@
+{
+  "field_title": "Power Plate Meals, LLC Recalls Frozen Meatloaf Products Due to Misbranding and Undeclared Allergens",
+  "field_recall_number_export": "008-2026",
+  "field_recall_number": "008-2026",
+  "field_recall_url": "http://www.fsis.usda.gov/recalls-alerts/power-plate-meals-llc-recalls-frozen-meatloaf-products-due-misbranding-and",
+  "field_active_notice": "False",
+  "field_archive_recall": "False",
+  "field_states": ["Minnesota", "North Dakota", "South Dakota"],
+  "field_distro_list": [],
+  "field_establishment": ["Power Plate Meals, LLC"],
+  "field_labels": ["Recall-008-2026-Labels.pdf"],
+  "field_processing": ["Fully Cooked - Not Shelf Stable"],
+  "field_product_items": [
+    "13.3-oz. vacuum sealed plastic tray packages containing “POWER PLATE MEALS MEATLOAF WITH GARLIC MASHED POTATOES” and “USE BY” dates between 6/25/26 and 6/10/27."
+  ],
+  "field_recall_classification": "Class II",
+  "field_risk_level": "Low - Class II",
+  "field_recall_date": "2026-06-18",
+  "field_last_modified_date": "2026-06-20",
+  "field_recall_reason": ["Unreported Allergens"],
+  "field_recall_type": "Active Recall",
+  "field_related_to_outbreak": "False",
+  "field_summary": "<p>FSIS announced the recall on June 18, 2026.</p><p>The products bear establishment number \"217SEND\" inside the USDA mark of inspection.</p><p><a href=\"/sites/default/files/food_label_pdf/2026-06/Recall-008-2026-Labels.pdf\">View labels</a></p>",
+  "field_year": "2026",
+  "langcode": "English",
+  "field_has_spanish": "False"
+}
