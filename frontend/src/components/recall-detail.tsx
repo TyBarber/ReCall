@@ -171,7 +171,6 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
           <div>
             <h2 id="severity-level">{severity.label}</h2>
             <p>{severity.summary}</p>
-            <p className="severity-advice">{severity.advice}</p>
           </div>
         </section>
 

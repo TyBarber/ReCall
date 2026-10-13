@@ -82,34 +82,30 @@ export type Severity = {
   key: SeverityKey;
   label: string;
   summary: string;
-  advice: string;
 };
 
+// Summaries paraphrase the agencies' own class definitions. The frontend does
+// not invent disposal, return, or medical guidance.
 const SEVERITIES: Record<SeverityKey, Omit<Severity, "key">> = {
   serious: {
     label: "Serious",
-    summary: "Could cause serious illness.",
-    advice: "Don’t eat it. Throw it away or return it to the store.",
+    summary: "Could cause serious health problems or death.",
   },
   moderate: {
     label: "Moderate",
-    summary: "Could make you sick for a short time.",
-    advice: "Don’t eat it. Return it or throw it away.",
+    summary: "Could cause temporary health problems.",
   },
   low: {
     label: "Low risk",
-    summary: "Unlikely to make you sick.",
-    advice: "Often a labeling mistake. Check the details before eating it.",
+    summary: "Not likely to cause health problems.",
   },
   alert: {
     label: "Health alert",
-    summary: "Officials are warning people about this food.",
-    advice: "Don’t eat it. A formal recall was not issued.",
+    summary: "A USDA FSIS warning about a possible health risk.",
   },
   unknown: {
     label: "Not classified",
-    summary: "The agency has not shared a risk level yet.",
-    advice: "Check the details below before eating it.",
+    summary: "The agency has not reported a risk level.",
   },
 };
 

@@ -16,9 +16,7 @@ export function SeverityGuide() {
           return (
             <li className={`severity-tile tone-${key}`} key={key}>
               <strong>{severity.label}</strong>
-              <span>
-                {severity.summary} {severity.advice}
-              </span>
+              <span>{severity.summary}</span>
               <small>Official name: {officialName}</small>
             </li>
           );

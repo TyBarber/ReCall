@@ -37,11 +37,11 @@ describe("pickSpotlightRecall", () => {
 });
 
 describe("RecallSpotlight", () => {
-  it("highlights a serious recall with what to do next", () => {
+  it("highlights the newest serious recall", () => {
     render(<RecallSpotlight recall={recalls[1]} />);
     const card = screen.getByRole("article", { name: "Featured recall" });
 
-    expect(within(card).getByText("Most serious right now")).toBeInTheDocument();
+    expect(within(card).getByText("Newest serious recall")).toBeInTheDocument();
     expect(
       within(card).getByRole("heading", { name: "Frozen spinach" }),
     ).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe("RecallSpotlight", () => {
       within(card).getByText(/Listed by FDA August 19, 2026/),
     ).toBeInTheDocument();
     expect(
-      within(card).getByRole("link", { name: /see what to do/i }),
+      within(card).getByRole("link", { name: /view recall details/i }),
     ).toHaveAttribute("href", "/recalls/second-recall");
   });
 

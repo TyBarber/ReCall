@@ -1320,10 +1320,6 @@ a.page-number-link:hover {
   font-size: 19px;
 }
 
-.severity-advice {
-  font-weight: 700;
-}
-
 .detail-reason-summary {
   padding: 20px 24px;
   border: var(--outline);

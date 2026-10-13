@@ -16,7 +16,7 @@ type RecallSpotlightProps = {
   recall: Recall | undefined;
 };
 
-/** Prefers the newest Class I recall so the hero highlights real danger. */
+/** Prefers the newest Class I recall among the recalls already fetched. */
 export function pickSpotlightRecall(recalls: Recall[]): Recall | undefined {
   return (
     recalls.find((recall) => recallSeverity(recall).key === "serious") ??
@@ -50,7 +50,7 @@ export function RecallSpotlight({ recall }: RecallSpotlightProps) {
         >
           <path d="M12 3l10 18H2L12 3zM12 10v4M12 17.5v.01" />
         </svg>
-        {severity.key === "serious" ? "Most serious right now" : "Newest recall"}
+        {severity.key === "serious" ? "Newest serious recall" : "Newest recall"}
       </span>
       <span className="food-tile food-tile-large">
         <FoodIcon category={foodCategory(recall)} />
@@ -83,7 +83,7 @@ export function RecallSpotlight({ recall }: RecallSpotlightProps) {
         </p>
       ) : null}
       <Link className="spotlight-link" href={`/recalls/${recall.id}`}>
-        See what to do <span aria-hidden="true">→</span>
+        View recall details <span aria-hidden="true">→</span>
       </Link>
     </article>
   );
