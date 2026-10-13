@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Archivo_Black, Atkinson_Hyperlegible } from "next/font/google";
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
         <SiteFooter />
+        <Analytics />
       </body>
     </html>
   );
