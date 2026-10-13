@@ -19,6 +19,8 @@ export class RecallApiError extends Error {
   }
 }
 
+const API_CACHE_SECONDS = 300;
+
 function apiBaseUrl(): string {
   const value = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
   if (!value) {
@@ -151,7 +153,11 @@ async function request(
 ): Promise<ApiResponse> {
   let response: Response;
   try {
-    response = await fetch(`${apiBaseUrl()}${path}`, { cache: "no-store" });
+    // Recall data changes daily, so a short shared cache absorbs traffic
+    // spikes without serving meaningfully stale information.
+    response = await fetch(`${apiBaseUrl()}${path}`, {
+      next: { revalidate: API_CACHE_SECONDS },
+    });
   } catch (error) {
     throw new RecallApiError(
       error instanceof Error

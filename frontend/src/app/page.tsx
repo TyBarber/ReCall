@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { EmptyState } from "@/components/empty-state";
 import { FoodIcon } from "@/components/food-icon";
@@ -27,8 +28,6 @@ const BROWSE_FOODS: [string, FoodCategory][] = [
   ["Peanut", "snacks"],
 ];
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "Food safety, made clear",
   description:
@@ -36,6 +35,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  // Render per request for relative "checked" times; API data stays cached.
+  await connection();
   const [recalls, freshness] = await Promise.all([
     getRecalls({ limit: HOME_RECALL_LIMIT, sort: "newest" }),
     getFreshness(),

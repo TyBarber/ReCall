@@ -10,6 +10,7 @@ class FakeTable:
     def __init__(self) -> None:
         self.items: dict[str, dict] = {}
         self.query_calls = []
+        self.scan_calls = 0
 
     def get_item(self, *, Key, **kwargs):
         item = self.items.get(Key["id"])
@@ -20,6 +21,7 @@ class FakeTable:
         return {}
 
     def scan(self, **kwargs):
+        self.scan_calls += 1
         return {"Items": list(self.items.values())}
 
     def query(self, **kwargs):
@@ -160,3 +162,29 @@ def test_dynamodb_classification_filter_applies_to_list_count_and_newest(
     assert [recall.id for recall in serious] == [sample_recall.id]
     assert [recall.id for recall in newest_moderate] == ["recall-2"]
     assert repository.count(classification=RecallClass.CLASS_III) == 1
+
+
+def test_dynamodb_reuses_one_scan_for_repeated_searches(sample_recall) -> None:
+    table = FakeTable()
+    now = [1000.0]
+    repository = DynamoDBRecallRepository(
+        table, scan_cache_seconds=300, clock=lambda: now[0]
+    )
+    repository.upsert(sample_recall)
+
+    assert len(repository.list(search="peanut")) == 1
+    assert repository.count(search="peanut") == 1
+    assert repository.list(search="cookies") == []
+    assert table.scan_calls == 1
+
+    now[0] += 301
+    repository.list(search="peanut")
+    assert table.scan_calls == 2
+
+    repository.upsert(
+        sample_recall.model_copy(
+            update={"id": "recall-2", "source_recall_id": "F-2", "product_name": "Cookies"}
+        )
+    )
+    assert len(repository.list(search="cookies")) == 1
+    assert table.scan_calls == 3

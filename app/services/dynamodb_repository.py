@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -17,11 +18,41 @@ from app.models.recall import (
 from app.services.repository import UpsertResult
 
 
+# Searches scan the whole table. Reusing one scan per warm Lambda for a few
+# minutes keeps request floods from multiplying DynamoDB read costs.
+SCAN_CACHE_SECONDS = 300.0
+
+
 class DynamoDBRecallRepository:
     """DynamoDB adapter; scans preserve Milestone 1 search and offset semantics."""
 
-    def __init__(self, table: Any) -> None:
+    def __init__(
+        self,
+        table: Any,
+        *,
+        scan_cache_seconds: float = SCAN_CACHE_SECONDS,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
         self.table = table
+        self.scan_cache_seconds = scan_cache_seconds
+        self.clock = clock
+        self._scan_cache: tuple[float, list[Recall]] | None = None
+
+    def _scan_all(self) -> list[Recall]:
+        now = self.clock()
+        if self._scan_cache and now - self._scan_cache[0] < self.scan_cache_seconds:
+            return self._scan_cache[1]
+        recalls: list[Recall] = []
+        kwargs: dict[str, Any] = {}
+        while True:
+            response = self.table.scan(**kwargs)
+            recalls.extend(self._from_item(item) for item in response.get("Items", []))
+            last_key = response.get("LastEvaluatedKey")
+            if not last_key:
+                break
+            kwargs["ExclusiveStartKey"] = last_key
+        self._scan_cache = (now, recalls)
+        return recalls
 
     @classmethod
     def from_resource(cls, *, table_name: str, region_name: str) -> "DynamoDBRecallRepository":
@@ -64,6 +95,7 @@ class DynamoDBRecallRepository:
                 update={"created_at": previous.created_at, "updated_at": datetime.now(timezone.utc)}
             )
         self.table.put_item(Item=self._to_item(recall))
+        self._scan_cache = None
         return UpsertResult(recall=recall, created=created)
 
     def get(self, recall_id: str) -> Recall | None:
@@ -121,7 +153,7 @@ class DynamoDBRecallRepository:
     ) -> list[Recall]:
         recalls: list[Recall] = []
         kwargs: dict[str, Any] = {}
-        operation = self.table.scan
+        operation = None
         if search is None and source is not None and sort == RecallSort.NEWEST:
             operation = self.table.query
             kwargs = {
@@ -145,13 +177,18 @@ class DynamoDBRecallRepository:
                 "KeyConditionExpression": Key("source").eq(source.value),
                 "ScanIndexForward": False,
             }
-        while True:
-            response = operation(**kwargs)
-            recalls.extend(self._from_item(item) for item in response.get("Items", []))
-            last_key = response.get("LastEvaluatedKey")
-            if not last_key:
-                break
-            kwargs["ExclusiveStartKey"] = last_key
+        if operation is None:
+            recalls = self._scan_all()
+        else:
+            while True:
+                response = operation(**kwargs)
+                recalls.extend(
+                    self._from_item(item) for item in response.get("Items", [])
+                )
+                last_key = response.get("LastEvaluatedKey")
+                if not last_key:
+                    break
+                kwargs["ExclusiveStartKey"] = last_key
 
         search_value = search.casefold() if search else None
         status_value = status.casefold() if status else None

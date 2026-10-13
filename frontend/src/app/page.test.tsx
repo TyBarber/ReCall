@@ -9,6 +9,7 @@ const { getFreshness, getRecalls } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/api/recalls", () => ({ getFreshness, getRecalls }));
+vi.mock("next/server", () => ({ connection: async () => {} }));
 vi.mock("@/components/home-search-form", () => ({
   HomeSearchForm: () => <div>Home search</div>,
 }));

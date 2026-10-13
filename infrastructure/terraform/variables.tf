@@ -141,3 +141,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "budget_alert_email" {
+  description = "Email for monthly AWS cost alerts. Leave empty to skip the budget."
+  type        = string
+  default     = ""
+}
+
+variable "monthly_budget_usd" {
+  description = "Monthly AWS spend that triggers cost alert emails."
+  type        = number
+  default     = 10
+}
