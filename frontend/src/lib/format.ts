@@ -213,3 +213,47 @@ export function foodCategory(
     CATEGORY_PATTERNS.find(([, pattern]) => pattern.test(text))?.[0] ?? "meals"
   );
 }
+
+export const SEVERITY_FILTERS = [
+  ["serious", "class_i"],
+  ["moderate", "class_ii"],
+  ["low", "class_iii"],
+] as const;
+
+export type SeverityFilterKey = (typeof SEVERITY_FILTERS)[number][0];
+
+export function severityFilterClass(
+  level: string,
+): (typeof SEVERITY_FILTERS)[number][1] | undefined {
+  return SEVERITY_FILTERS.find(([key]) => key === level)?.[1];
+}
+
+const RELATIVE_TIME = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
+
+/** "2 hours ago"-style text for a past timestamp. */
+export function formatTimeAgo(value: string, now: Date = new Date()): string | null {
+  const then = new Date(value);
+  if (Number.isNaN(then.getTime())) {
+    return null;
+  }
+  const minutes = Math.round((then.getTime() - now.getTime()) / 60_000);
+  if (Math.abs(minutes) < 60) {
+    return minutes > -1 ? "just now" : RELATIVE_TIME.format(minutes, "minute");
+  }
+  const hours = Math.round(minutes / 60);
+  if (Math.abs(hours) < 48) {
+    return RELATIVE_TIME.format(hours, "hour");
+  }
+  return RELATIVE_TIME.format(Math.round(hours / 24), "day");
+}
+
+/** The most recent check across sources, for a single "last checked" label. */
+export function latestCheck(
+  sources: { last_checked_at: string | null }[] | null,
+): string | null {
+  const times = (sources ?? [])
+    .map((source) => source.last_checked_at)
+    .filter((value): value is string => Boolean(value))
+    .sort();
+  return times.at(-1) ?? null;
+}

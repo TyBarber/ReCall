@@ -6,7 +6,14 @@ from typing import Any
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from app.models.recall import Recall, RecallRecordType, RecallSort, RecallSource
+from app.models.recall import (
+    Recall,
+    RecallClass,
+    RecallRecordType,
+    RecallSort,
+    RecallSource,
+    recall_class,
+)
 from app.services.repository import UpsertResult
 
 
@@ -69,6 +76,7 @@ class DynamoDBRecallRepository:
         source: RecallSource,
         status: str | None,
         record_type: RecallRecordType | None,
+        classification: RecallClass | None,
         limit: int,
         offset: int,
     ) -> list[Recall]:
@@ -88,6 +96,11 @@ class DynamoDBRecallRepository:
                     continue
                 if record_type is not None and recall.record_type != record_type:
                     continue
+                if (
+                    classification is not None
+                    and recall_class(recall.classification) != classification
+                ):
+                    continue
                 recalls.append(recall)
             last_key = response.get("LastEvaluatedKey")
             if not last_key:
@@ -103,6 +116,7 @@ class DynamoDBRecallRepository:
         source: RecallSource | None = None,
         status: str | None = None,
         record_type: RecallRecordType | None = None,
+        classification: RecallClass | None = None,
         sort: RecallSort | None = None,
     ) -> list[Recall]:
         recalls: list[Recall] = []
@@ -147,6 +161,10 @@ class DynamoDBRecallRepository:
             if (source is None or recall.source == source)
             and (status_value is None or recall.status.casefold() == status_value)
             and (record_type is None or recall.record_type == record_type)
+            and (
+                classification is None
+                or recall_class(recall.classification) == classification
+            )
             and (search_value is None or search_value in recall.model_dump_json().casefold())
         ]
         date_field = (
@@ -171,6 +189,7 @@ class DynamoDBRecallRepository:
         source: RecallSource | None = None,
         status: str | None = None,
         record_type: RecallRecordType | None = None,
+        classification: RecallClass | None = None,
     ) -> int:
         return len(
             self._matching_recalls(
@@ -178,6 +197,7 @@ class DynamoDBRecallRepository:
                 source=source,
                 status=status,
                 record_type=record_type,
+                classification=classification,
             )
         )
 
@@ -188,6 +208,7 @@ class DynamoDBRecallRepository:
         source: RecallSource | None = None,
         status: str | None = None,
         record_type: RecallRecordType | None = None,
+        classification: RecallClass | None = None,
         sort: RecallSort | None = None,
         limit: int = 100,
         offset: int = 0,
@@ -201,6 +222,7 @@ class DynamoDBRecallRepository:
                 source=source,
                 status=status,
                 record_type=record_type,
+                classification=classification,
                 limit=limit,
                 offset=offset,
             )
@@ -209,6 +231,7 @@ class DynamoDBRecallRepository:
             source=source,
             status=status,
             record_type=record_type,
+            classification=classification,
             sort=sort,
         )
         return filtered[offset : offset + limit]

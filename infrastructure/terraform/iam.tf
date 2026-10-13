@@ -146,6 +146,11 @@ resource "aws_iam_role_policy" "api" {
           aws_dynamodb_table.recalls.arn,
           "${aws_dynamodb_table.recalls.arn}/index/*"
         ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:GetItem"]
+        Resource = aws_dynamodb_table.ingestion_state.arn
       }
     ]
   })

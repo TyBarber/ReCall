@@ -112,10 +112,11 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      EXECUTION_ENVIRONMENT = "aws"
-      REPOSITORY_BACKEND    = "dynamodb"
-      DYNAMODB_TABLE_NAME   = aws_dynamodb_table.recalls.name
-      LOG_LEVEL             = "INFO"
+      EXECUTION_ENVIRONMENT      = "aws"
+      REPOSITORY_BACKEND         = "dynamodb"
+      DYNAMODB_TABLE_NAME        = aws_dynamodb_table.recalls.name
+      INGESTION_STATE_TABLE_NAME = aws_dynamodb_table.ingestion_state.name
+      LOG_LEVEL                  = "INFO"
     }
   }
 

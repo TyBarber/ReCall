@@ -226,3 +226,79 @@ def test_usda_fsis_search_and_detail_serialization(client, repository) -> None:
     assert detail.json()["record_type"] == "recall"
     assert detail.json()["category"] == "food"
     assert detail.json()["establishment_numbers"] == ["EST. 20528"]
+
+
+def test_classification_filter_matches_class_text(
+    client, repository, sample_recall
+) -> None:
+    repository.upsert(
+        sample_recall.model_copy(
+            update={
+                "id": "recall-2",
+                "source_recall_id": "F-1002-2025",
+                "classification": "Class II",
+            }
+        )
+    )
+    repository.upsert(
+        sample_recall.model_copy(
+            update={
+                "id": "recall-3",
+                "source_recall_id": "PHA-1",
+                "source": RecallSource.USDA_FSIS,
+                "record_type": RecallRecordType.PUBLIC_HEALTH_ALERT,
+                "classification": None,
+            }
+        )
+    )
+
+    serious = client.get("/recalls", params={"classification": "class_i"})
+    moderate_newest = client.get(
+        "/recalls", params={"classification": "class_ii", "sort": "newest"}
+    )
+
+    assert [recall["id"] for recall in serious.json()] == ["recall-1"]
+    assert serious.headers["x-total-count"] == "1"
+    assert [recall["id"] for recall in moderate_newest.json()] == ["recall-2"]
+    assert moderate_newest.headers["x-total-count"] == "1"
+    assert client.get("/recalls", params={"classification": "class_iv"}).status_code == 422
+
+
+def test_freshness_reports_last_successful_check_per_source(repository) -> None:
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+    from app.services.checkpoint import IngestionCheckpoint
+
+    checked_at = datetime(2026, 10, 13, 6, 0, tzinfo=timezone.utc)
+
+    class FakeCheckpoints:
+        def get(self, source: str) -> IngestionCheckpoint | None:
+            if source != "fda":
+                return None
+            return IngestionCheckpoint(
+                source=source,
+                last_successful_ingestion_at=checked_at,
+                last_ingestion_id="ingestion-1",
+                updated_at=checked_at,
+            )
+
+    with TestClient(create_app(repository, FakeCheckpoints())) as test_client:
+        response = test_client.get("/freshness")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "sources": [
+            {"source": "fda", "last_checked_at": "2026-10-13T06:00:00Z"},
+            {"source": "usda_fsis", "last_checked_at": None},
+        ]
+    }
+
+
+def test_freshness_is_unknown_without_checkpoints(client) -> None:
+    assert client.get("/freshness").json() == {
+        "sources": [
+            {"source": "fda", "last_checked_at": None},
+            {"source": "usda_fsis", "last_checked_at": None},
+        ]
+    }

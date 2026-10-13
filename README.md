@@ -31,7 +31,8 @@ Architecture decisions are documented in [`docs/architecture`](docs/architecture
 - Idempotent SQLite and DynamoDB repository adapters
 - Environment-based local/AWS repository selection
 - FastAPI routes exposed locally or through API Gateway using Mangum
-- `GET /health`, `GET /recalls`, and `GET /recalls/{id}`
+- `GET /health`, `GET /recalls`, `GET /recalls/{id}`, and `GET /freshness`
+- Classification filtering with `classification=class_i|class_ii|class_iii`
 - Unified search, FDA/USDA FSIS source, exact source-status, record-type, limit, and offset filtering/pagination
 - Source-correct initiation/publication dates with bounded cross-source `sort=newest`
 - Structured JSON logging with ingestion, recall, source, message, and request identifiers

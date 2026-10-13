@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  getFreshness,
   getRecall,
   getRecallPage,
   getRecalls,
@@ -152,5 +153,42 @@ describe("recall API client", () => {
         status: 404,
       },
     );
+  });
+
+  it("forwards a classification filter and rejects an API that ignores it", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response(JSON.stringify([recallFixture]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getRecalls({ classification: "class_ii" })).resolves.toHaveLength(1);
+    expect(fetchMock.mock.calls[0][0]).toContain("classification=class_ii");
+    await expect(getRecalls({ classification: "class_i" })).rejects.toThrow(
+      "does not support filtering by classification",
+    );
+  });
+
+  it("reads freshness and treats an older API as unsupported", async () => {
+    const sources = [
+      { source: "fda", last_checked_at: "2026-10-13T06:00:00Z" },
+      { source: "usda_fsis", last_checked_at: null },
+    ];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ sources }), { status: 200 }),
+      ),
+    );
+    await expect(getFreshness()).resolves.toEqual(sources);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("Not found", { status: 404 })),
+    );
+    await expect(getFreshness()).resolves.toBeNull();
   });
 });

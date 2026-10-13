@@ -65,4 +65,25 @@ describe("SearchForm", () => {
       "page",
     );
   });
+
+  it("offers plain-language severity filters only when supported", () => {
+    const { rerender } = render(<SearchForm level="" />);
+    expect(
+      screen.queryByRole("link", { name: "Serious" }),
+    ).not.toBeInTheDocument();
+
+    rerender(<SearchForm level="serious" severityFilterAvailable />);
+    expect(screen.getByRole("link", { name: /Serious/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Low risk" })).toHaveAttribute(
+      "href",
+      "/recalls?level=low&page=1#current-recalls",
+    );
+    expect(screen.getByRole("link", { name: "Salmonella" })).toHaveAttribute(
+      "href",
+      "/recalls?search=Salmonella&level=serious&page=1#current-recalls",
+    );
+  });
 });

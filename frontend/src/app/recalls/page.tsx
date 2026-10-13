@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 
+import { FreshnessSticker } from "@/components/freshness";
 import { RecallFeed } from "@/components/recall-feed";
 import { SearchForm } from "@/components/search-form";
-import { getRecallPage } from "@/lib/api/recalls";
+import { getFreshness, getRecallPage } from "@/lib/api/recalls";
+import {
+  severityByKey,
+  severityFilterClass,
+  type SeverityFilterKey,
+} from "@/lib/format";
 
 const PAGE_SIZE = 12;
 
@@ -18,6 +24,7 @@ type DirectorySearchParams = {
   page?: string | string[];
   source?: string | string[];
   record_type?: string | string[];
+  level?: string | string[];
 };
 
 function firstValue(value: string | string[] | undefined): string {
@@ -43,6 +50,14 @@ export default async function RecallDirectory({
     requestedRecordType === "public_health_alert"
       ? requestedRecordType
       : "";
+  const freshness = await getFreshness();
+  // The API ignores unknown filters, so only offer severity once it exists.
+  const severityFilterAvailable = freshness !== null;
+  const requestedLevel = firstValue(params.level).trim();
+  const classification = severityFilterAvailable
+    ? severityFilterClass(requestedLevel)
+    : undefined;
+  const level = classification ? (requestedLevel as SeverityFilterKey) : "";
   const requestedPage = Number.parseInt(firstValue(params.page), 10);
   const currentPage =
     Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
@@ -52,6 +67,7 @@ export default async function RecallDirectory({
     status: status || undefined,
     source: source || undefined,
     recordType: recordType || undefined,
+    classification,
     limit: PAGE_SIZE,
     offset,
   });
@@ -60,7 +76,7 @@ export default async function RecallDirectory({
     <main className="home-page directory-page">
       <section className="directory-intro">
         <div className="shell directory-intro-inner">
-          <span className="sticker">Updated daily</span>
+          <FreshnessSticker sources={freshness} />
           <h1>Current food recalls</h1>
           <p>
             Search every FDA and USDA FSIS food recall by product, brand, or
@@ -71,6 +87,8 @@ export default async function RecallDirectory({
             status={status}
             source={source}
             recordType={recordType}
+            level={level}
+            severityFilterAvailable={severityFilterAvailable}
           />
         </div>
       </section>
@@ -80,9 +98,11 @@ export default async function RecallDirectory({
           <div className="feed-heading directory-feed-heading">
             <div>
               <h2>
-                {search || status || source || recordType
-                  ? "Matching recalls"
-                  : "All recalls"}
+                {level
+                  ? `${severityByKey(level).label} recalls`
+                  : search || status || source || recordType
+                    ? "Matching recalls"
+                    : "All recalls"}
               </h2>
               <p className="feed-copy">
                 {search
@@ -104,6 +124,7 @@ export default async function RecallDirectory({
             status={status || undefined}
             source={source || undefined}
             recordType={recordType || undefined}
+            level={level || undefined}
             currentPage={currentPage}
             limit={PAGE_SIZE}
             totalCount={totalCount}

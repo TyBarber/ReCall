@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from app.models.recall import Recall, RecallRecordType, RecallSort, RecallSource
+from app.models.recall import (
+    Recall,
+    RecallClass,
+    RecallRecordType,
+    RecallSort,
+    RecallSource,
+)
 from app.services.repository import RecallRepository
 
 
@@ -23,6 +29,7 @@ def query_recalls(
     sort: RecallSort | None,
     limit: int,
     offset: int,
+    classification: RecallClass | None = None,
 ) -> RecallQueryResult:
     if sort == RecallSort.NEWEST and source is None and search is None:
         # Each per-source query is bounded and uses source-reported-date-index in
@@ -37,6 +44,7 @@ def query_recalls(
                     source=supported_source,
                     status=status,
                     record_type=record_type,
+                    classification=classification,
                     sort=RecallSort.NEWEST,
                     limit=target_count,
                     offset=0,
@@ -46,6 +54,7 @@ def query_recalls(
                 source=supported_source,
                 status=status,
                 record_type=record_type,
+                classification=classification,
             )
         candidates.sort(
             key=lambda recall: (
@@ -65,6 +74,7 @@ def query_recalls(
             source=source,
             status=status,
             record_type=record_type,
+            classification=classification,
             sort=sort,
             limit=limit,
             offset=offset,
@@ -74,5 +84,6 @@ def query_recalls(
             source=source,
             status=status,
             record_type=record_type,
+            classification=classification,
         ),
     )

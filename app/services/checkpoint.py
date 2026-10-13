@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Protocol
 
 import boto3
 
@@ -13,6 +13,10 @@ class IngestionCheckpoint:
     last_successful_ingestion_at: datetime
     last_ingestion_id: str
     updated_at: datetime
+
+
+class CheckpointReader(Protocol):
+    def get(self, source: str) -> IngestionCheckpoint | None: ...
 
 
 class DynamoDBCheckpointStore:

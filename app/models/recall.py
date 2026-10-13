@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timezone
 from enum import StrEnum
 
@@ -22,6 +23,23 @@ class RecallCategory(StrEnum):
 
 class RecallSort(StrEnum):
     NEWEST = "newest"
+
+
+class RecallClass(StrEnum):
+    CLASS_I = "class_i"
+    CLASS_II = "class_ii"
+    CLASS_III = "class_iii"
+
+
+_CLASS_PATTERN = re.compile(r"\bclass\s*(i{1,3})\b", re.IGNORECASE)
+
+
+def recall_class(classification: str | None) -> RecallClass | None:
+    """Maps agency classification text such as "Class II" to a filterable class."""
+    match = _CLASS_PATTERN.search(classification or "")
+    if not match:
+        return None
+    return RecallClass(f"class_{match.group(1).lower()}")
 
 
 class Recall(BaseModel):

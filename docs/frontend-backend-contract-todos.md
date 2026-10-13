@@ -23,10 +23,16 @@ production traffic.
   reviewed raw-S3 backfill before depending on newest ordering in production.
 - Evaluate cursor-based pagination beyond the current truthful
   `X-Total-Count` plus numeric-offset contract as the dataset grows.
-- Add server-side classification filtering before offering a classification or
-  “Most serious” control.
-- Add freshness metadata that tells consumers when source data was last
-  ingested.
+- ~~Add server-side classification filtering before offering a classification
+  control.~~ Implemented as `GET /recalls?classification=class_i|class_ii|class_iii`.
+  The frontend shows its “How serious” filter only when `GET /freshness`
+  exists, and rejects results that do not match the requested class, because an
+  older API silently ignores the parameter.
+- ~~Add freshness metadata that tells consumers when source data was last
+  ingested.~~ Implemented as `GET /freshness`, which reports each source's last
+  successful ingestion checkpoint (null locally, where no checkpoints exist).
+  Both changes require redeploying the API Lambda before they reach the
+  deployed frontend.
 - Improve source URLs when a consumer-facing FDA recall notice is available.
   Current links are labeled “View FDA source data.”
 - Preserve and improve source parsing for noisy UPC, lot/code, and state fields.

@@ -6,8 +6,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.models.recall import Recall, RecallRecordType, RecallSort, RecallSource
+from app.models.recall import (
+    Recall,
+    RecallClass,
+    RecallRecordType,
+    RecallSort,
+    RecallSource,
+    recall_class,
+)
 from app.services.repository import UpsertResult
+
+
+def _recall_class_value(classification: str | None) -> str | None:
+    value = recall_class(classification)
+    return value.value if value else None
 
 
 class SQLiteRecallRepository:
@@ -17,6 +29,9 @@ class SQLiteRecallRepository:
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         self._connection = sqlite3.connect(self.path, check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
+        self._connection.create_function(
+            "recall_class", 1, _recall_class_value, deterministic=True
+        )
         self._initialize()
 
     def _initialize(self) -> None:
@@ -78,6 +93,7 @@ class SQLiteRecallRepository:
         source: RecallSource | None,
         status: str | None,
         record_type: RecallRecordType | None,
+        classification: RecallClass | None = None,
     ) -> tuple[str, list[Any]]:
         clauses: list[str] = []
         parameters: list[Any] = []
@@ -95,6 +111,9 @@ class SQLiteRecallRepository:
                 "COALESCE(json_extract(document, '$.record_type'), 'recall') = ?"
             )
             parameters.append(record_type.value)
+        if classification:
+            clauses.append("recall_class(json_extract(document, '$.classification')) = ?")
+            parameters.append(classification.value)
         where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
         return where, parameters
 
@@ -105,12 +124,14 @@ class SQLiteRecallRepository:
         source: RecallSource | None = None,
         status: str | None = None,
         record_type: RecallRecordType | None = None,
+        classification: RecallClass | None = None,
     ) -> int:
         where, parameters = self._filters(
             search=search,
             source=source,
             status=status,
             record_type=record_type,
+            classification=classification,
         )
         row = self._connection.execute(
             f"SELECT COUNT(*) AS total FROM recalls{where}", parameters
@@ -124,6 +145,7 @@ class SQLiteRecallRepository:
         source: RecallSource | None = None,
         status: str | None = None,
         record_type: RecallRecordType | None = None,
+        classification: RecallClass | None = None,
         sort: RecallSort | None = None,
         limit: int = 100,
         offset: int = 0,
@@ -133,6 +155,7 @@ class SQLiteRecallRepository:
             source=source,
             status=status,
             record_type=record_type,
+            classification=classification,
         )
         parameters.extend([limit, offset])
         order_by = (

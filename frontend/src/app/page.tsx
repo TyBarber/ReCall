@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
 import { FoodIcon } from "@/components/food-icon";
+import { FreshnessSticker } from "@/components/freshness";
 import { HomeSearchForm } from "@/components/home-search-form";
 import { RecallCard } from "@/components/recall-card";
 import {
@@ -10,7 +11,7 @@ import {
   RecallSpotlight,
 } from "@/components/recall-spotlight";
 import { SeverityGuide } from "@/components/severity-guide";
-import { getRecalls } from "@/lib/api/recalls";
+import { getFreshness, getRecalls } from "@/lib/api/recalls";
 import type { FoodCategory } from "@/lib/format";
 
 const HOME_RECALL_LIMIT = 7;
@@ -34,20 +35,28 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const recalls = await getRecalls({
-    limit: HOME_RECALL_LIMIT,
-    sort: "newest",
-  });
-  const spotlight = pickSpotlightRecall(recalls);
+  const [recalls, freshness] = await Promise.all([
+    getRecalls({ limit: HOME_RECALL_LIMIT, sort: "newest" }),
+    getFreshness(),
+  ]);
+  // With server-side classification filtering, feature the newest Class I
+  // recall overall rather than only among the newest few.
+  const newestSerious =
+    freshness !== null
+      ? (
+          await getRecalls({ limit: 1, sort: "newest", classification: "class_i" })
+        )[0]
+      : undefined;
+  const spotlight = newestSerious ?? pickSpotlightRecall(recalls);
   const preview = recalls
-    .filter((recall) => recall !== spotlight)
+    .filter((recall) => recall.id !== spotlight?.id)
     .slice(0, HOME_PREVIEW_COUNT);
 
   return (
     <div className="home-page">
       <section className="shell hero">
         <div className="hero-panel">
-          <span className="sticker hero-sticker">Updated daily</span>
+          <FreshnessSticker className="hero-sticker" sources={freshness} />
           <h1>
             Check before <br />
             you <mark>chomp.</mark>

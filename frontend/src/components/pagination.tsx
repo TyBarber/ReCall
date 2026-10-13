@@ -9,6 +9,7 @@ type PaginationProps = {
   status?: string;
   source?: Recall["source"];
   recordType?: Recall["record_type"];
+  level?: string;
   totalCount: number;
 };
 
@@ -52,12 +53,14 @@ function pageHref(
   status: string | undefined,
   source: Recall["source"] | undefined,
   recordType: Recall["record_type"] | undefined,
+  level: string | undefined,
 ): string {
   const query = new URLSearchParams();
   if (search) query.set("search", search);
   if (status) query.set("status", status);
   if (source) query.set("source", source);
   if (recordType) query.set("record_type", recordType);
+  if (level) query.set("level", level);
   query.set("page", String(page));
   return `/recalls?${query.toString()}#current-recalls`;
 }
@@ -99,6 +102,7 @@ export function Pagination({
   status,
   source,
   recordType,
+  level,
   totalCount,
 }: PaginationProps) {
   const totalPages = Math.ceil(totalCount / limit);
@@ -115,7 +119,7 @@ export function Pagination({
         <DirectionControl
           direction="Previous"
           disabled={currentPage === 1}
-          href={pageHref(currentPage - 1, search, status, source, recordType)}
+          href={pageHref(currentPage - 1, search, status, source, recordType, level)}
         />
 
         <div className="pagination-pages" aria-label="Choose a recall results page">
@@ -132,7 +136,7 @@ export function Pagination({
             ) : (
               <Link
                 className="page-number-link"
-                href={pageHref(item, search, status, source, recordType)}
+                href={pageHref(item, search, status, source, recordType, level)}
                 aria-label={`Page ${item}`}
                 key={item}
               >
@@ -145,7 +149,7 @@ export function Pagination({
         <DirectionControl
           direction="Next"
           disabled={currentPage === totalPages}
-          href={pageHref(currentPage + 1, search, status, source, recordType)}
+          href={pageHref(currentPage + 1, search, status, source, recordType, level)}
         />
       </div>
     </nav>

@@ -1083,6 +1083,35 @@ p {
   color: var(--ink);
 }
 
+.severity-chip.tone-serious,
+.severity-chip.tone-moderate,
+.severity-chip.tone-low {
+  border-color: var(--tone);
+}
+
+.severity-chip.tone-serious::before,
+.severity-chip.tone-moderate::before,
+.severity-chip.tone-low::before {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--tone);
+  content: "";
+}
+
+.severity-chip.status-chip-active::before {
+  display: none;
+}
+
+.severity-chip.status-chip-active.tone-serious,
+.severity-chip.status-chip-active.tone-moderate,
+.severity-chip.status-chip-active.tone-low {
+  border-color: var(--tone);
+  background: var(--tone);
+  color: var(--ink);
+}
+
 .more-filters {
   display: flex;
   flex-direction: column;
@@ -1565,7 +1594,14 @@ a.page-number-link:hover {
 }
 
 .footer-trust {
+  display: flex;
   max-width: 480px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-freshness {
+  font-weight: 700;
 }
 
 /* Loading skeletons */

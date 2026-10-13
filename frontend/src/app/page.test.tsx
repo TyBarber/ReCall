@@ -3,9 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { recallFixture } from "@/test/fixtures";
 
-const { getRecalls } = vi.hoisted(() => ({ getRecalls: vi.fn() }));
+const { getFreshness, getRecalls } = vi.hoisted(() => ({
+  getFreshness: vi.fn(),
+  getRecalls: vi.fn(),
+}));
 
-vi.mock("@/lib/api/recalls", () => ({ getRecalls }));
+vi.mock("@/lib/api/recalls", () => ({ getFreshness, getRecalls }));
 vi.mock("@/components/home-search-form", () => ({
   HomeSearchForm: () => <div>Home search</div>,
 }));
@@ -13,7 +16,8 @@ vi.mock("@/components/home-search-form", () => ({
 import Home from "@/app/page";
 
 describe("Home", () => {
-  it("features the newest serious recall and previews the rest from one fetch", async () => {
+  it("features a serious recall from the newest list on an older API", async () => {
+    getFreshness.mockResolvedValue(null);
     const serious = {
       ...recallFixture,
       id: "serious-recall",
@@ -24,6 +28,7 @@ describe("Home", () => {
     render(await Home());
 
     expect(getRecalls).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Updated daily")).toBeInTheDocument();
     expect(getRecalls).toHaveBeenCalledWith({ limit: 7, sort: "newest" });
 
     const featured = screen.getByRole("article", { name: "Featured recall" });
@@ -57,5 +62,34 @@ describe("Home", () => {
     expect(
       screen.getByRole("link", { name: /view all recalls/i }),
     ).toHaveAttribute("href", "/recalls");
+  });
+
+  it("asks the API for the newest Class I recall when filtering is supported", async () => {
+    getRecalls.mockReset();
+    const newestSerious = {
+      ...recallFixture,
+      id: "older-serious",
+      product_name: "Raw cookie dough",
+      classification: "Class I",
+    };
+    getFreshness.mockResolvedValue([
+      { source: "fda", last_checked_at: new Date().toISOString() },
+      { source: "usda_fsis", last_checked_at: null },
+    ]);
+    getRecalls
+      .mockResolvedValueOnce([recallFixture])
+      .mockResolvedValueOnce([newestSerious]);
+    render(await Home());
+
+    expect(getRecalls).toHaveBeenLastCalledWith({
+      limit: 1,
+      sort: "newest",
+      classification: "class_i",
+    });
+    const featured = screen.getByRole("article", { name: "Featured recall" });
+    expect(
+      within(featured).getByRole("heading", { name: "Raw cookie dough" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Checked just now")).toBeInTheDocument();
   });
 });

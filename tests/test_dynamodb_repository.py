@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.models.recall import RecallRecordType, RecallSort
+from app.models.recall import RecallClass, RecallRecordType, RecallSort
 from app.services.dynamodb_repository import DynamoDBRecallRepository
 
 
@@ -124,3 +124,39 @@ def test_dynamodb_record_type_filter_applies_to_list_and_count(sample_recall) ->
 
     assert [recall.id for recall in alerts] == ["fsis-alert"]
     assert repository.count(record_type=RecallRecordType.PUBLIC_HEALTH_ALERT) == 1
+
+
+def test_dynamodb_classification_filter_applies_to_list_count_and_newest(
+    sample_recall,
+) -> None:
+    repository = DynamoDBRecallRepository(FakeTable())
+    repository.upsert(sample_recall)
+    repository.upsert(
+        sample_recall.model_copy(
+            update={
+                "id": "recall-2",
+                "source_recall_id": "F-2",
+                "classification": "Class II",
+            }
+        )
+    )
+    repository.upsert(
+        sample_recall.model_copy(
+            update={
+                "id": "recall-3",
+                "source_recall_id": "F-3",
+                "classification": "Class III",
+            }
+        )
+    )
+
+    serious = repository.list(classification=RecallClass.CLASS_I)
+    newest_moderate = repository.list(
+        source=sample_recall.source,
+        classification=RecallClass.CLASS_II,
+        sort=RecallSort.NEWEST,
+    )
+
+    assert [recall.id for recall in serious] == [sample_recall.id]
+    assert [recall.id for recall in newest_moderate] == ["recall-2"]
+    assert repository.count(classification=RecallClass.CLASS_III) == 1

@@ -30,6 +30,8 @@ export type Recall = {
   updated_at: string;
 };
 
+export type RecallClassFilter = "class_i" | "class_ii" | "class_iii";
+
 export type RecallListParams = {
   search?: string;
   status?: string;
@@ -38,9 +40,15 @@ export type RecallListParams = {
   sort?: "newest";
   source?: "fda" | "usda_fsis";
   recordType?: "recall" | "public_health_alert";
+  classification?: RecallClassFilter;
 };
 
 export type RecallPage = {
   recalls: Recall[];
   totalCount: number;
+};
+
+export type SourceFreshness = {
+  source: Recall["source"];
+  last_checked_at: string | null;
 };

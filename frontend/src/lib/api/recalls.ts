@@ -1,6 +1,13 @@
 import { cache } from "react";
 
-import type { Recall, RecallListParams, RecallPage } from "@/lib/types";
+import { classificationTone } from "@/lib/format";
+import type {
+  Recall,
+  RecallClassFilter,
+  RecallListParams,
+  RecallPage,
+  SourceFreshness,
+} from "@/lib/types";
 
 export class RecallApiError extends Error {
   constructor(
@@ -98,7 +105,37 @@ function recallListPath(params: RecallListParams): string {
   if (params.recordType) {
     query.set("record_type", params.recordType);
   }
+  if (params.classification) {
+    query.set("classification", params.classification);
+  }
   return `/recalls?${query.toString()}`;
+}
+
+const CLASS_TONES: Record<RecallClassFilter, string> = {
+  class_i: "class-one",
+  class_ii: "class-two",
+  class_iii: "class-three",
+};
+
+/**
+ * An API without classification support ignores the parameter and returns
+ * everything, which would mislabel results. Refuse rather than mislead.
+ */
+function assertClassification(
+  recalls: Recall[],
+  classification: RecallClassFilter | undefined,
+): void {
+  if (
+    classification &&
+    recalls.some(
+      (recall) =>
+        classificationTone(recall.classification) !== CLASS_TONES[classification],
+    )
+  ) {
+    throw new RecallApiError(
+      "The recall service does not support filtering by classification yet.",
+    );
+  }
 }
 
 function validatedRecallList(data: unknown): Recall[] {
@@ -145,6 +182,7 @@ export async function getRecallPage(
 ): Promise<RecallPage> {
   const { data, headers } = await request(recallListPath(params));
   const recalls = validatedRecallList(data);
+  assertClassification(recalls, params.classification);
 
   const totalCountHeader = headers.get("x-total-count");
   const totalCount = Number.parseInt(totalCountHeader ?? "", 10);
@@ -161,8 +199,37 @@ export async function getRecalls(
   params: RecallListParams = {},
 ): Promise<Recall[]> {
   const { data } = await request(recallListPath(params));
-  return validatedRecallList(data);
+  const recalls = validatedRecallList(data);
+  assertClassification(recalls, params.classification);
+  return recalls;
 }
+
+function isSourceFreshness(value: unknown): value is SourceFreshness {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const entry = value as Record<string, unknown>;
+  return (
+    (entry.source === "fda" || entry.source === "usda_fsis") &&
+    (entry.last_checked_at === null || typeof entry.last_checked_at === "string")
+  );
+}
+
+/**
+ * Returns per-source freshness, or null when the API predates the endpoint.
+ * The endpoint's presence also signals classification filtering support.
+ */
+export const getFreshness = cache(async (): Promise<SourceFreshness[] | null> => {
+  try {
+    const { data } = await request("/freshness");
+    const sources = (data as { sources?: unknown } | null)?.sources;
+    return Array.isArray(sources) && sources.every(isSourceFreshness)
+      ? sources
+      : null;
+  } catch {
+    return null;
+  }
+});
 
 export const getRecall = cache(async (id: string): Promise<Recall> => {
   const { data } = await request(`/recalls/${encodeURIComponent(id)}`, {

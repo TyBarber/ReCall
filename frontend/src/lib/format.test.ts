@@ -4,6 +4,8 @@ import {
   displayProductName,
   foodCategory,
   formatClassification,
+  formatTimeAgo,
+  latestCheck,
   formatRecallDate,
   hasUsefulSourceUrl,
   recallSeverity,
@@ -73,5 +75,22 @@ describe("recall display formatting", () => {
       foodCategory({ product_name: "Tomato Salsa Fresca", description: "Contains water" }),
     ).toBe("produce");
     expect(foodCategory({ product_name: "Glutinous Rice Balls", description: null })).toBe("meals");
+  });
+
+  it("describes how long ago the data was checked", () => {
+    const now = new Date("2026-10-13T12:00:00Z");
+    expect(formatTimeAgo("2026-10-13T11:59:40Z", now)).toBe("just now");
+    expect(formatTimeAgo("2026-10-13T11:20:00Z", now)).toBe("40 minutes ago");
+    expect(formatTimeAgo("2026-10-13T06:00:00Z", now)).toBe("6 hours ago");
+    expect(formatTimeAgo("2026-10-10T12:00:00Z", now)).toBe("3 days ago");
+    expect(formatTimeAgo("not a date", now)).toBeNull();
+    expect(
+      latestCheck([
+        { last_checked_at: "2026-10-12T06:00:00Z" },
+        { last_checked_at: null },
+        { last_checked_at: "2026-10-13T06:00:00Z" },
+      ]),
+    ).toBe("2026-10-13T06:00:00Z");
+    expect(latestCheck(null)).toBeNull();
   });
 });

@@ -3,6 +3,11 @@ import Link from "next/link";
 
 import { SearchButton } from "@/components/search-button";
 import { SearchIcon } from "@/components/ui/search-icon";
+import {
+  SEVERITY_FILTERS,
+  severityByKey,
+  type SeverityFilterKey,
+} from "@/lib/format";
 import type { Recall } from "@/lib/types";
 
 type SearchFormProps = {
@@ -10,6 +15,8 @@ type SearchFormProps = {
   status?: string;
   source?: Recall["source"] | "";
   recordType?: Recall["record_type"] | "";
+  level?: SeverityFilterKey | "";
+  severityFilterAvailable?: boolean;
 };
 
 const STATUSES = [
@@ -28,6 +35,13 @@ const SOURCES = [
   ["usda_fsis", "USDA FSIS"],
 ] as const;
 
+const LEVELS: [SeverityFilterKey | "", string][] = [
+  ["", "All"],
+  ...SEVERITY_FILTERS.map(
+    ([key]) => [key, severityByKey(key).label] as [SeverityFilterKey, string],
+  ),
+];
+
 const RECORD_TYPES = [
   ["", "All records"],
   ["recall", "Recalls"],
@@ -39,6 +53,7 @@ function searchHref(
   status: string,
   source: string,
   recordType: string,
+  level: string,
 ): string {
   const params = new URLSearchParams();
   if (search) {
@@ -53,6 +68,9 @@ function searchHref(
   if (recordType) {
     params.set("record_type", recordType);
   }
+  if (level) {
+    params.set("level", level);
+  }
   params.set("page", "1");
   return `/recalls?${params.toString()}#current-recalls`;
 }
@@ -62,6 +80,8 @@ export function SearchForm({
   status = "",
   source = "",
   recordType = "",
+  level = "",
+  severityFilterAvailable = false,
 }: SearchFormProps) {
   return (
     <div className="command-search">
@@ -77,6 +97,7 @@ export function SearchForm({
         {recordType ? (
           <input name="record_type" type="hidden" value={recordType} />
         ) : null}
+        {level ? <input name="level" type="hidden" value={level} /> : null}
         <label className="command-label" htmlFor="search">
           Search current recalls
         </label>
@@ -94,6 +115,32 @@ export function SearchForm({
         </div>
       </Form>
       <div className="search-support">
+        {severityFilterAvailable ? (
+          <div
+            className="status-chips"
+            aria-label="Filter recalls by how serious they are"
+          >
+            <span className="support-label">How serious</span>
+            {LEVELS.map(([value, label]) => {
+              const active = level === value;
+              return (
+                <Link
+                  className={`status-chip severity-chip${value ? ` tone-${value}` : ""}${active ? " status-chip-active" : ""}`}
+                  href={searchHref(search, status, source, recordType, value)}
+                  aria-current={active ? "page" : undefined}
+                  key={value || "all-levels"}
+                >
+                  {active ? (
+                    <span className="chip-check" aria-hidden="true">
+                      ✓
+                    </span>
+                  ) : null}
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
         <div className="quick-searches" aria-label="Suggested searches">
           <span className="support-label">Try</span>
           {[
@@ -102,7 +149,7 @@ export function SearchForm({
             ["Allergens", "allergen"],
             ["Cheese", "cheese"],
           ].map(([label, query]) => (
-            <Link href={searchHref(query, status, source, recordType)} key={query}>
+            <Link href={searchHref(query, status, source, recordType, level)} key={query}>
               {label}
             </Link>
           ))}
@@ -114,7 +161,7 @@ export function SearchForm({
             return (
               <Link
                 className={`status-chip${active ? " status-chip-active" : ""}`}
-                href={searchHref(search, status, value, recordType)}
+                href={searchHref(search, status, value, recordType, level)}
                 aria-current={active ? "page" : undefined}
                 key={value || "all-sources"}
               >
@@ -137,7 +184,7 @@ export function SearchForm({
               return (
                 <Link
                   className={`status-chip${active ? " status-chip-active" : ""}`}
-                  href={searchHref(search, value, source, recordType)}
+                  href={searchHref(search, value, source, recordType, level)}
                   aria-current={active ? "page" : undefined}
                   key={value || "all"}
                 >
@@ -158,7 +205,7 @@ export function SearchForm({
               return (
                 <Link
                   className={`status-chip${active ? " status-chip-active" : ""}`}
-                  href={searchHref(search, status, source, value)}
+                  href={searchHref(search, status, source, value, level)}
                   aria-current={active ? "page" : undefined}
                   key={value || "all-record-types"}
                 >
