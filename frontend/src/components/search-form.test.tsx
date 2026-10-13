@@ -21,7 +21,7 @@ describe("SearchForm", () => {
 
     expect(screen.getByRole("searchbox")).toHaveAttribute(
       "placeholder",
-      "Search food, brands, UPCs",
+      "Food, brand, or barcode",
     );
     expect(screen.getByRole("searchbox")).toHaveValue("mac & cheese");
     expect(screen.getByRole("link", { name: "Ongoing" })).toHaveAttribute(
@@ -45,14 +45,24 @@ describe("SearchForm", () => {
       "type",
       "submit",
     );
-    expect(container.querySelector(".corner-btn-wrapper")).toHaveStyle({
-      "--accent": "#D8FF3E",
-      "--button-surface": "#FFFDF4",
-    });
-    expect(container.querySelector(".corner-btn-action-icon")).toBeInTheDocument();
+    expect(container.querySelector("details.more-filters")).toHaveAttribute(
+      "open",
+    );
     expect(container.querySelector("svg.command-icon")).toHaveAttribute(
       "aria-hidden",
       "true",
+    );
+  });
+
+  it("keeps status and record type filters collapsed until they are used", () => {
+    const { container } = render(<SearchForm />);
+
+    expect(container.querySelector("details.more-filters")).not.toHaveAttribute(
+      "open",
+    );
+    expect(screen.getByRole("link", { name: "All sources" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
   });
 });

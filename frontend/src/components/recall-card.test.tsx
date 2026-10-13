@@ -106,7 +106,7 @@ describe("RecallCard", () => {
   it("keeps homepage previews focused on essential recall facts", () => {
     render(<RecallCard recall={recallFixture} variant="preview" />);
 
-    expect(screen.getByText("Why it was recalled")).toBeInTheDocument();
+    expect(screen.getByText(recallFixture.recall_reason)).toBeInTheDocument();
     expect(screen.getByText("Listed by FDA")).toBeInTheDocument();
     expect(screen.queryByText("Sold/distributed in")).not.toBeInTheDocument();
     expect(
@@ -116,5 +116,24 @@ describe("RecallCard", () => {
       "href",
       `/recalls/${recallFixture.id}`,
     );
+  });
+
+  it("leads with a plain-language severity and a readable product name", () => {
+    const { container } = render(
+      <RecallCard
+        recall={{
+          ...recallFixture,
+          classification: "Class I",
+          product_name: "Tomato Salsa Fresca. Ingredients: Tomatoes",
+        }}
+      />,
+    );
+
+    expect(container.querySelector("article")).toHaveClass("tone-serious");
+    expect(screen.getByText("Serious")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Tomato Salsa Fresca" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("FDA", { exact: true })).not.toBeInTheDocument();
   });
 });

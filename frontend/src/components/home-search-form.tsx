@@ -41,7 +41,7 @@ export function HomeSearchForm() {
             id="home-search"
             name="search"
             type="search"
-            placeholder="Search food, brands, companies, reasons, or UPCs"
+            placeholder="Food, brand, or barcode"
             autoComplete="off"
           />
           <SearchButton pending={pending} />

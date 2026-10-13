@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  displayProductName,
+  foodCategory,
   formatClassification,
   formatRecallDate,
   hasUsefulSourceUrl,
+  recallSeverity,
 } from "@/lib/format";
 
 describe("recall display formatting", () => {
@@ -29,5 +32,46 @@ describe("recall display formatting", () => {
         "https://api.fda.gov/food/enforcement.json?search=recall_number:",
       ),
     ).toBe(false);
+  });
+
+  it("maps classifications to plain-language severity", () => {
+    expect(recallSeverity({ classification: "Class I", record_type: "recall" }).label).toBe("Serious");
+    expect(recallSeverity({ classification: "Class II", record_type: "recall" }).label).toBe("Moderate");
+    expect(recallSeverity({ classification: "Class III", record_type: "recall" }).label).toBe("Low risk");
+    expect(
+      recallSeverity({ classification: null, record_type: "public_health_alert" }).label,
+    ).toBe("Health alert");
+    expect(recallSeverity({ classification: null, record_type: "recall" }).key).toBe("unknown");
+  });
+
+  it.each([
+    ["KC Everyday Mac & Cheese", "KC Everyday Mac & Cheese"],
+    ["Tomato Salsa Fresca. Ingredients: Tomatoes", "Tomato Salsa Fresca"],
+    ["Prince ITALIAN BREAD; Sesame; ITALIAN & FRENCH BREAD", "Prince Italian Bread"],
+    [
+      "Glutinous Rice Balls with Black Sesame Filling NET WT. 14.1 OZ (400 g) Product of China UPC: 6908791000053",
+      "Glutinous Rice Balls with Black Sesame Filling",
+    ],
+    [
+      "UPC 25185700000 COOKIE GOURMET DUBAI 1CT This is Albertson's store-made item and sold by unit.",
+      "Cookie Gourmet Dubai",
+    ],
+    ["Organic Moringa Powder; 15kg/bag (bulk); Product code: GJ96", "Organic Moringa Powder"],
+    [
+      "Sura Tanmen Hot and Sour Flavor Premium Japanese Noodles & Soup Base. Retail package net wt. 15.4oz.",
+      "Sura Tanmen Hot and Sour Flavor Premium Japanese Noodles & Soup Base",
+    ],
+  ])("shortens raw product text %#", (raw, expected) => {
+    expect(displayProductName(raw)).toBe(expected);
+  });
+
+  it("guesses a food category for the card icon", () => {
+    expect(foodCategory({ product_name: "Requeson Mexican Cottage Cheese", description: null })).toBe("dairy");
+    expect(foodCategory({ product_name: "Crunchy Protein Sprout Mix", description: null })).toBe("produce");
+    expect(foodCategory({ product_name: "Ribeye steak", description: null })).toBe("meat");
+    expect(
+      foodCategory({ product_name: "Tomato Salsa Fresca", description: "Contains water" }),
+    ).toBe("produce");
+    expect(foodCategory({ product_name: "Glutinous Rice Balls", description: null })).toBe("meals");
   });
 });

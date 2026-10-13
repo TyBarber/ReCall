@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { RecallDetailView } from "@/components/recall-detail";
 import { getRecall, RecallApiError } from "@/lib/api/recalls";
-import { formatRecallDate } from "@/lib/format";
+import { displayProductName, formatRecallDate } from "@/lib/format";
 
 type RecallDetailProps = {
   params: Promise<{ id: string }>;
@@ -16,7 +16,7 @@ export async function generateMetadata({
   try {
     const recall = await getRecall(id);
     return {
-      title: recall.product_name,
+      title: displayProductName(recall.product_name),
       description: `${recall.recall_reason} Recall started ${formatRecallDate(recall.recall_date)}.`,
     };
   } catch {

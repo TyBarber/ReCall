@@ -1,10 +1,14 @@
 import Link from "next/link";
 
+import { FoodIcon } from "@/components/food-icon";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
 import {
+  displayProductName,
+  foodCategory,
   formatRecallDate,
   hasUsefulSourceUrl,
+  recallSeverity,
   reportedDateLabel,
   sourceFullName,
   sourceShortName,
@@ -107,6 +111,9 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
   const agency = sourceShortName(recall.source);
   const fullAgencyName = sourceFullName(recall.source);
   const isPublicHealthAlert = recall.record_type === "public_health_alert";
+  const severity = recallSeverity(recall);
+  const productName = displayProductName(recall.product_name);
+  const fullProductName = recall.product_name.trim().replace(/\s+/g, " ");
 
   return (
     <main className="shell detail-page">
@@ -114,7 +121,7 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
         <span aria-hidden="true">←</span> Back to recalls
       </Link>
 
-      <header className="detail-header">
+      <header className={`detail-header tone-${severity.key}`}>
         <div className="card-badges">
           {isPublicHealthAlert ? (
             <span className="record-type-badge">Public Health Alert</span>
@@ -130,7 +137,15 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
         <p className="eyebrow">
           {isPublicHealthAlert ? "USDA FSIS Public Health Alert" : `${agency} food recall`}
         </p>
-        <h1>{recall.product_name}</h1>
+        <h1>{productName}</h1>
+        {productName !== fullProductName &&
+        normalizedValue(recall.description ?? "") !==
+          normalizedValue(fullProductName) ? (
+          <p className="detail-full-name">
+            <span>Full product name: </span>
+            {fullProductName}
+          </p>
+        ) : null}
         {recallingFirm || brand ? (
           <div className="detail-company">
             <span>
@@ -148,6 +163,17 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
             Brand or recalling firm not provided in the {agency} record.
           </p>
         )}
+
+        <section className="severity-banner" aria-labelledby="severity-level">
+          <span className="food-tile food-tile-large">
+            <FoodIcon category={foodCategory(recall)} />
+          </span>
+          <div>
+            <h2 id="severity-level">{severity.label}</h2>
+            <p>{severity.summary}</p>
+            <p className="severity-advice">{severity.advice}</p>
+          </div>
+        </section>
 
         <section className="detail-reason-summary" aria-labelledby="recall-reason">
           <h2 id="recall-reason">Why it was recalled</h2>

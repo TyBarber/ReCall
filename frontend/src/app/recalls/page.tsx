@@ -60,11 +60,11 @@ export default async function RecallDirectory({
     <main className="home-page directory-page">
       <section className="directory-intro">
         <div className="shell directory-intro-inner">
-          <p className="feed-kicker">Recall directory</p>
+          <span className="sticker">Updated daily</span>
           <h1>Current food recalls</h1>
           <p>
-            Search FDA and USDA FSIS food safety records, then narrow the
-            directory by status or source.
+            Search every FDA and USDA FSIS food recall by product, brand, or
+            barcode. Use the filters to narrow things down.
           </p>
           <SearchForm
             search={search}
@@ -79,7 +79,6 @@ export default async function RecallDirectory({
         <div className="shell recall-feed-inner">
           <div className="feed-heading directory-feed-heading">
             <div>
-              <p className="feed-kicker">Browse recalls</p>
               <h2>
                 {search || status || source || recordType
                   ? "Matching recalls"

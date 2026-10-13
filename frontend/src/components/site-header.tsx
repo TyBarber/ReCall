@@ -4,17 +4,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import {
-  isNavItemActive,
-  SpotlightNavbar,
-  type NavItem,
-} from "@/components/ui/spotlight-navbar";
+type NavItem = {
+  label: string;
+  href: string;
+};
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/" },
-  { label: "Recalls", href: "/recalls" },
+  { label: "All recalls", href: "/recalls" },
   { label: "How it works", href: "/#how-it-works" },
 ];
+
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  const [route, hash] = item.href.split("#");
+
+  if (hash) {
+    return false;
+  }
+
+  if (route === "/") {
+    return pathname === "/";
+  }
+
+  return pathname === route || pathname.startsWith(`${route}/`);
+}
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -45,13 +58,30 @@ export function SiteHeader() {
           <span className="brand-mark" aria-hidden="true">
             R
           </span>
-          <span>
-            <strong>ReCall</strong>
-            <small>Food safety, made clear</small>
+          <span className="brand-name">
+            ReCall<span aria-hidden="true">.</span>
           </span>
         </Link>
 
-        <SpotlightNavbar className="desktop-site-nav" items={NAV_ITEMS} />
+        <nav className="desktop-site-nav" aria-label="Primary navigation">
+          <ul>
+            {NAV_ITEMS.map((item) => {
+              const isActive = isNavItemActive(item, pathname);
+
+              return (
+                <li key={item.href}>
+                  <Link
+                    className={`nav-link${isActive ? " nav-link-active" : ""}`}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
         <button
           ref={triggerRef}
@@ -84,7 +114,7 @@ export function SiteHeader() {
                   <Link
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={isActive ? "mobile-nav-link-active" : undefined}
+                    className={`nav-link${isActive ? " nav-link-active" : ""}`}
                     onClick={() => setMenuState({ open: false, pathname })}
                   >
                     {item.label}

@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import "@fontsource-variable/space-grotesk";
-import { GeistSans } from "geist/font/sans";
+import { Archivo_Black, Atkinson_Hyperlegible } from "next/font/google";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 import "./globals.css";
+
+const displayFont = Archivo_Black({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-display",
+});
+
+const bodyFont = Atkinson_Hyperlegible({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -21,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={GeistSans.variable}
+      className={`${displayFont.variable} ${bodyFont.variable}`}
       data-scroll-behavior="smooth"
     >
       <body>

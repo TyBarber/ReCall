@@ -1,10 +1,14 @@
 import Link from "next/link";
 
+import { FoodIcon } from "@/components/food-icon";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
 import {
-  classificationTone,
+  displayProductName,
+  foodCategory,
+  formatClassification,
   formatRecallDate,
+  recallSeverity,
   reportedDateLabel,
   sourceShortName,
 } from "@/lib/format";
@@ -40,41 +44,36 @@ function codeSummary(recall: Recall): string | null {
 
 export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
   const isPreview = variant === "preview";
-  const tone = classificationTone(recall.classification);
+  const severity = recallSeverity(recall);
   const distribution = isPreview ? null : distributionSummary(recall);
   const codes = isPreview ? null : codeSummary(recall);
   const displayDate = recall.reported_at || recall.recall_date;
+  const isPublicHealthAlert = recall.record_type === "public_health_alert";
 
   return (
     <article
-      className={`recall-card recall-card-${tone}${isPreview ? " recall-card-preview" : ""}`}
+      className={`recall-card tone-${severity.key}${isPreview ? " recall-card-preview" : ""}`}
     >
-      <div className="card-signals" aria-label="Recall classification and status">
-        {recall.record_type === "public_health_alert" ? (
-          <span className="record-type-badge">Public Health Alert</span>
-        ) : null}
-        <RecallClassification
-          classification={recall.classification}
-          source={recall.source}
-        />
-        {recall.record_type !== "public_health_alert" ||
-        recall.status !== "Public Health Alert" ? (
-          <StatusBadge status={recall.status} />
-        ) : null}
+      <div className="card-top">
+        <span className="food-tile">
+          <FoodIcon category={foodCategory(recall)} />
+        </span>
+        <span className="severity-pill">
+          {isPublicHealthAlert ? "Public Health Alert" : severity.label}
+        </span>
       </div>
       <div className="card-heading">
-        <p className="card-source">{sourceShortName(recall.source)}</p>
         <p className="card-company">
           {recall.recalling_firm || recall.brand || "Company not reported"}
         </p>
-        <h3>{recall.product_name}</h3>
+        <h3>{displayProductName(recall.product_name)}</h3>
       </div>
-      <div className="card-reason">
-        <span>Why it was recalled</span>
-        <p>{recall.recall_reason}</p>
-      </div>
+      <p className="card-reason">
+        <span className="sr-only">Why it was recalled: </span>
+        {recall.recall_reason}
+      </p>
       {displayDate || distribution || codes ? (
-        <dl className="card-quick-facts" aria-label="Recall quick facts">
+        <dl className="card-facts" aria-label="Recall quick facts">
           {displayDate ? (
             <div>
               <dt>
@@ -86,13 +85,13 @@ export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
             </div>
           ) : null}
           {distribution ? (
-            <div className="fact-distribution">
+            <div>
               <dt>Sold/distributed in</dt>
               <dd title={distribution}>{distribution}</dd>
             </div>
           ) : null}
           {codes ? (
-            <div className="fact-codes">
+            <div>
               <dt>
                 {recall.source === "fda"
                   ? "Product codes reported by FDA"
@@ -103,7 +102,19 @@ export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
           ) : null}
         </dl>
       ) : null}
-      <div className="card-actions">
+      <div className="card-footer">
+        <div className="card-signals" aria-label="Recall classification and status">
+          {formatClassification(recall.classification, recall.source) ? null : (
+            <span className="card-source">{sourceShortName(recall.source)}</span>
+          )}
+          <RecallClassification
+            classification={recall.classification}
+            source={recall.source}
+          />
+          {!isPublicHealthAlert || recall.status !== "Public Health Alert" ? (
+            <StatusBadge status={recall.status} />
+          ) : null}
+        </div>
         <Link className="card-detail-link" href={`/recalls/${recall.id}`}>
           {isPreview ? "View recall" : "View recall details"}
           <span aria-hidden="true">→</span>
