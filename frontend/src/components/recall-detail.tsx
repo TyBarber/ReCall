@@ -4,7 +4,9 @@ import { FoodIcon } from "@/components/food-icon";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
 import {
+  displayCompany,
   displayProductName,
+  softenCapitals,
   foodCategory,
   formatRecallDate,
   hasUsefulSourceUrl,
@@ -95,7 +97,9 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
       : null;
   const recallingFirm = isUsefulText(recall.recalling_firm)
     ? recall.recalling_firm.trim()
-    : null;
+    : isUsefulText(recall.brand)
+      ? null
+      : displayCompany(recall);
   const brand = isUsefulText(recall.brand) ? recall.brand.trim() : null;
   const showSeparateBrand = Boolean(
     recallingFirm &&
@@ -151,10 +155,10 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
             <span>
               {recallingFirm ? "Recalling firm" : "Brand or recalling firm"}
             </span>
-            <p>{recallingFirm ?? brand}</p>
+            <p>{softenCapitals(recallingFirm ?? brand ?? "")}</p>
             {showSeparateBrand ? (
               <p className="detail-company-brand">
-                <strong>Brand</strong> {brand}
+                <strong>Brand</strong> {brand ? softenCapitals(brand) : null}
               </p>
             ) : null}
           </div>

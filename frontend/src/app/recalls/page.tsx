@@ -69,6 +69,7 @@ export default async function RecallDirectory({
     source: source || undefined,
     recordType: recordType || undefined,
     classification,
+    sort: "newest",
     limit: PAGE_SIZE,
     offset,
   });

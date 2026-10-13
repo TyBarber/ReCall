@@ -73,6 +73,7 @@ describe("RecallDirectory", () => {
       source: "usda_fsis",
       recordType: "public_health_alert",
       classification: undefined,
+      sort: "newest",
       limit: 12,
       offset: 12,
     });

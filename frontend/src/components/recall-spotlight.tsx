@@ -4,6 +4,7 @@ import { FoodIcon } from "@/components/food-icon";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
 import {
+  displayCompany,
   displayProductName,
   foodCategory,
   formatRecallDate,
@@ -57,7 +58,7 @@ export function RecallSpotlight({ recall }: RecallSpotlightProps) {
       </span>
       <h2>{displayProductName(recall.product_name)}</h2>
       <p className="spotlight-company">
-        {recall.recalling_firm || recall.brand || "Company not reported"}
+        {displayCompany(recall) ?? "Company not named"}
       </p>
       <p className="spotlight-reason">{recall.recall_reason}</p>
       <div className="spotlight-signals">

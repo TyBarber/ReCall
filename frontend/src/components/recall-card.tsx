@@ -4,6 +4,7 @@ import { FoodIcon } from "@/components/food-icon";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
 import {
+  displayCompany,
   displayProductName,
   foodCategory,
   formatClassification,
@@ -64,7 +65,7 @@ export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
       </div>
       <div className="card-heading">
         <p className="card-company">
-          {recall.recalling_firm || recall.brand || "Company not reported"}
+          {displayCompany(recall) ?? "Company not named"}
         </p>
         <h3>{displayProductName(recall.product_name)}</h3>
       </div>

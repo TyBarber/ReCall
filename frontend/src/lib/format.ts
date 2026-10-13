@@ -132,20 +132,49 @@ export function severityByKey(key: SeverityKey): Severity {
 }
 
 const PACKAGING_DETAIL =
-  /(?:[.;,]\s+|\s+)(?:net\s*wt\b|net\s*weight\b|upc\b|ingredients?\s*:|product\s*code\b|item\s*#|retail\s*package\b|produced\s+and\s+distributed\b|distributed\s+by\b|packed\s+by\b|manufactured\s+by\b|this\s+is\b)/i;
+  /(?:[.;,]\s+|\s+)(?:net\s*wt\b|net\s*weight\b|upc\b|ingredients?\s*:|product\s*code\b|item\s*#|retail\s*package\b|produced\s+and\s+distributed\b|distributed\s+by\b|packed\s+by\b|manufactured\s+by\b|this\s+is\b|keep\s+refrigerated\b|pack(?:ag)?ed\s+in\b|shelf\s+life\b|product\s+of\b|each\s+\w+\s+(?:is|contains)\b)/i;
+// FSIS titles read like headlines: "Acme LLC Recalls Pork Products Due to ...".
+const FSIS_ALERT_PREFIX = /^FSIS\s+Issues\s+Public\s+Health\s+Alert\s+for\s+(?:an?\s+)?/i;
+const FSIS_RECALL_TITLE = /^(.+?)\s+Recalls?\s+(.+)$/;
+const FSIS_TITLE_REASON =
+  /\s+(?:Due\s+to|That\s+(?:May|Have|Has|Were|Was)|Because|Produced\s+Without|(?:Illegally\s+)?Imported\s+(?:From|Without)|Distributed\s+Without|Containing)\b/i;
+// A sentence break after a real product name ("Pico De Gallo. Ingredients...").
+const SENTENCE_BREAK = /\.\s+(?=[A-Z])/;
 const LEADING_UPC = /^upc[:#\s]*[\d\s-]+/i;
 const TRAILING_SIZE = /\s+(?:\d+(?:\.\d+)?\s*(?:ct|oz|lbs?|g|kg|ml|l)\.?|\([^)]*\))$/i;
-const KEEP_UPPERCASE = new Set(["BBQ", "USA", "USDA", "FDA", "UPC", "II", "III"]);
+const KEEP_UPPERCASE = new Set([
+  "BBQ", "USA", "USDA", "FDA", "FSIS", "UPC", "II", "III", "LLC", "LLP", "LP", "DBA",
+]);
 const MAX_DISPLAY_NAME = 80;
 
 function capitalizeWord(word: string): string {
   return word.charAt(0) + word.slice(1).toLocaleLowerCase("en-US");
 }
 
+/** Turns ALL-CAPS words from agency data into normal capitalization. */
+export function softenCapitals(text: string): string {
+  const letters = text.replace(/[^A-Za-z]/g, "");
+  const mostlyUppercase =
+    letters.length > 0 &&
+    letters.replace(/[^A-Z]/g, "").length / letters.length > 0.6;
+  return text.replace(/[A-Za-z][A-Za-z'’]*/g, (word) => {
+    if (word !== word.toUpperCase() || KEEP_UPPERCASE.has(word)) {
+      return word;
+    }
+    return word.length >= (mostlyUppercase ? 2 : 4) ? capitalizeWord(word) : word;
+  });
+}
+
 /** Shortens raw agency product text into a readable product name. */
 export function displayProductName(raw: string): string {
-  const original = raw.trim().replace(/\s+/g, " ");
+  // Some FDA text arrives with "¿" in place of accented letters ("Jalapen¿o").
+  const original = raw.trim().replace(/\s+/g, " ").replace(/(\w)¿(\w)/g, "$1$2");
   let name = original.replace(LEADING_UPC, "").trim();
+
+  const fsisProduct = fsisTitleParts(name)?.product;
+  if (fsisProduct) {
+    name = fsisProduct;
+  }
 
   const packaging = name.match(PACKAGING_DETAIL);
   if (packaging?.index && packaging.index >= 8) {
@@ -154,21 +183,16 @@ export function displayProductName(raw: string): string {
   if (name.indexOf("; ") >= 8) {
     name = name.slice(0, name.indexOf("; "));
   }
+  const sentence = name.match(SENTENCE_BREAK);
+  if (sentence?.index && sentence.index >= 12) {
+    name = name.slice(0, sentence.index);
+  }
   while (TRAILING_SIZE.test(name)) {
     name = name.replace(TRAILING_SIZE, "");
   }
   name = name.replace(/[\s.,;:-]+$/, "");
 
-  const letters = name.replace(/[^A-Za-z]/g, "");
-  const mostlyUppercase =
-    letters.length > 0 &&
-    letters.replace(/[^A-Z]/g, "").length / letters.length > 0.6;
-  name = name.replace(/[A-Za-z][A-Za-z'’]*/g, (word) => {
-    if (word !== word.toUpperCase() || KEEP_UPPERCASE.has(word)) {
-      return word;
-    }
-    return word.length >= (mostlyUppercase ? 3 : 4) ? capitalizeWord(word) : word;
-  });
+  name = softenCapitals(name);
 
   if (name.length > MAX_DISPLAY_NAME) {
     const cut = name.lastIndexOf(" ", MAX_DISPLAY_NAME);
@@ -178,39 +202,88 @@ export function displayProductName(raw: string): string {
   return name || original;
 }
 
+function fsisTitleParts(
+  title: string,
+): { company: string | null; product: string } | null {
+  let company: string | null = null;
+  let rest: string;
+  if (FSIS_ALERT_PREFIX.test(title)) {
+    rest = title.replace(FSIS_ALERT_PREFIX, "");
+  } else {
+    const match = title.match(FSIS_RECALL_TITLE);
+    // Headlines name a company of a few words before "Recalls".
+    if (!match || match[1].split(/\s+/).length > 10 || !/^[A-Z0-9]/.test(match[1])) {
+      return null;
+    }
+    company = match[1].replace(/[,\s]+$/, "");
+    rest = match[2];
+  }
+  const reason = rest.match(FSIS_TITLE_REASON);
+  const product = (reason?.index ? rest.slice(0, reason.index) : rest).trim();
+  return product.length >= 4 ? { company, product } : null;
+}
+
+/** The recalling company, falling back to the firm named in a USDA title. */
+export function displayCompany(
+  recall: Pick<Recall, "recalling_firm" | "brand" | "product_name" | "source">,
+): string | null {
+  const company =
+    recall.recalling_firm?.trim() ||
+    recall.brand?.trim() ||
+    (recall.source === "usda_fsis"
+      ? fsisTitleParts(recall.product_name)?.company
+      : null);
+  return company ? softenCapitals(company) : null;
+}
+
 export type FoodCategory =
   | "seafood"
   | "meat"
   | "dairy"
   | "bakery"
   | "drinks"
+  | "supplements"
   | "spices"
   | "produce"
   | "snacks"
   | "meals";
 
 const CATEGORY_KEYWORDS: [FoodCategory, string[]][] = [
-  ["seafood", ["fish", "salmon", "tuna", "shrimp", "crab", "seafood", "oyster", "clam", "cod", "tilapia"]],
-  ["meat", ["beef", "chicken", "pork", "sausage", "turkey", "meat", "poultry", "ham", "bacon", "jerky", "hot dog", "lamb", "steak"]],
-  ["dairy", ["cheese", "milk", "cream", "yogurt", "butter", "dairy", "reques", "queso"]],
-  ["bakery", ["bread", "cookie", "cake", "bakery", "muffin", "bun", "bagel", "pastr", "tortilla", "cracker", "pie"]],
-  ["produce", ["sprout", "tomato", "lettuce", "salad", "fruit", "vegetable", "spinach", "onion", "jalape", "apple", "cucumber", "cantaloupe", "berr", "produce", "salsa", "carrot", "melon"]],
-  ["drinks", ["tea", "coffee", "juice", "drink", "beverage", "water", "soda", "kombucha", "tisane"]],
-  ["spices", ["spice", "powder", "seasoning", "curry", "cinnamon", "herb", "pepper flakes"]],
-  ["snacks", ["chocolate", "candy", "chip", "snack", "nut", "granola", "bar"]],
+  ["seafood", ["fish", "salmon", "tuna", "shrimp", "crab", "seafood", "oyster", "clam", "cod", "tilapia", "siluriformes", "catfish"]],
+  ["meat", ["beef", "chicken", "pork", "sausage", "turkey", "meat", "poultry", "ham", "bacon", "jerky", "hot dog", "lamb", "steak", "goat", "pastrami", "guanciale", "meatloaf"]],
+  ["supplements", ["collagen", "peptide", "supplement", "capsule", "vitamin", "ginseng", "protein powder"]],
+  ["drinks", ["tea", "coffee", "juice", "drink", "beverage", "soda", "kombucha", "tisane", "cashewmilk", "almondmilk", "oatmilk", "7up"]],
+  ["dairy", ["cheese", "cheddar", "milk", "cream", "yogurt", "butter", "dairy", "reques*", "queso", "pecorino", "fromage"]],
+  ["bakery", ["bread", "cookie", "cake", "bakery", "muffin", "bun", "bagel", "pastr*", "tortilla", "cracker", "pie", "fettuccine", "pasta", "noodle", "dumpling"]],
+  ["produce", ["sprout*", "alfalfa", "mung", "broccoli", "radish", "garlic", "pepper", "tomato", "lettuce", "salad", "fruit", "vegetable", "spinach", "onion", "jalape*", "apple", "cucumber", "cantaloupe", "berr*", "strawberr*", "produce", "salsa", "pico", "guacamole", "avocado", "carrot", "melon", "mushroom", "raisin", "coconut", "moringa"]],
+  ["spices", ["spice", "powder", "seasoning", "curry", "cinnamon", "herb", "sugar", "olive oil", "oil"]],
+  ["snacks", ["chocolate", "candy", "chip", "snack", "nut", "granola", "bar", "hots", "puffs", "crisps", "pretzel", "popcorn", "crackling*"]],
 ];
 
-const CATEGORY_PATTERNS = CATEGORY_KEYWORDS.map(
-  ([category, words]) =>
-    [category, new RegExp(`\\b(?:${words.join("|")})`, "i")] as const,
-);
+// Keywords match whole words (plus a plural ending); a trailing "*" marks a
+// prefix such as "jalape*" for "jalapeño". Whole words keep "bun" out of
+// "bundle" and "cod" out of "code".
+const CATEGORY_PATTERNS = CATEGORY_KEYWORDS.map(([category, words]) => {
+  const alternatives = words.map((word) =>
+    word.endsWith("*") ? word.slice(0, -1) : `${word}(?:e?s)?\\b`,
+  );
+  return [category, new RegExp(`\\b(?:${alternatives.join("|")})`, "i")] as const;
+});
 
+function categoryIn(text: string): FoodCategory | undefined {
+  // "Dairy free" products should not get the dairy icon.
+  const cleaned = text.replace(/\bdairy[\s-]free\b/gi, " ");
+  return CATEGORY_PATTERNS.find(([, pattern]) => pattern.test(cleaned))?.[0];
+}
+
+/** Picks an icon category from the product name first, then the description. */
 export function foodCategory(
   recall: Pick<Recall, "product_name" | "description">,
 ): FoodCategory {
-  const text = `${recall.product_name} ${recall.description ?? ""}`;
   return (
-    CATEGORY_PATTERNS.find(([, pattern]) => pattern.test(text))?.[0] ?? "meals"
+    categoryIn(displayProductName(recall.product_name)) ??
+    categoryIn(recall.description ?? "") ??
+    "meals"
   );
 }
 
