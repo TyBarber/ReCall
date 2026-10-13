@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { FreshnessSticker } from "@/components/freshness";
 import { RecallFeed } from "@/components/recall-feed";
 import { SearchForm } from "@/components/search-form";
+import { WatchButton } from "@/components/watch-button";
 import { getFreshness, getRecallPage } from "@/lib/api/recalls";
 import {
   severityByKey,
@@ -114,9 +115,12 @@ export default async function RecallDirectory({
                       : "FDA and USDA FSIS food safety records currently available in ReCall."}
               </p>
             </div>
-            <p className="feed-results-summary" aria-live="polite">
-              {totalCount} {totalCount === 1 ? "recall" : "recalls"}
-            </p>
+            <div className="feed-actions">
+              {search ? <WatchButton term={search} /> : null}
+              <p className="feed-results-summary" aria-live="polite">
+                {totalCount} {totalCount === 1 ? "recall" : "recalls"}
+              </p>
+            </div>
           </div>
           <RecallFeed
             recalls={recalls}

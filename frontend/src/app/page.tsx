@@ -11,6 +11,7 @@ import {
   RecallSpotlight,
 } from "@/components/recall-spotlight";
 import { SeverityGuide } from "@/components/severity-guide";
+import { Watchlist } from "@/components/watchlist";
 import { getFreshness, getRecalls } from "@/lib/api/recalls";
 import type { FoodCategory } from "@/lib/format";
 
@@ -82,6 +83,8 @@ export default async function Home() {
         </div>
         <RecallSpotlight recall={spotlight} />
       </section>
+
+      <Watchlist />
 
       <SeverityGuide />
 

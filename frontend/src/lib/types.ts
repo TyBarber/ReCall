@@ -52,3 +52,13 @@ export type SourceFreshness = {
   source: Recall["source"];
   last_checked_at: string | null;
 };
+
+export type WatchlistMatch = Pick<
+  Recall,
+  "id" | "product_name" | "classification" | "record_type" | "reported_at" | "recall_date"
+>;
+
+export type WatchlistResult = {
+  term: string;
+  recalls: WatchlistMatch[] | null;
+};

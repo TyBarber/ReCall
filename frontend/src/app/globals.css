@@ -694,6 +694,119 @@ p {
   text-underline-offset: 4px;
 }
 
+/* Watchlist */
+
+.watchlist {
+  padding-bottom: 56px;
+}
+
+.watchlist .section-heading {
+  margin-bottom: 8px;
+}
+
+.watchlist-note {
+  color: var(--ink-soft);
+}
+
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.watchlist-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border: var(--outline);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.watchlist-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.watchlist-card-header h3 {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+.watchlist-card-header a {
+  text-decoration: none;
+}
+
+.watchlist-card-header a:hover {
+  text-decoration: underline;
+}
+
+.watchlist-remove {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: var(--outline-thin);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.watchlist-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.watchlist-matches a {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: var(--outline-thin);
+  border-radius: 14px;
+  background: var(--page);
+  text-decoration: none;
+}
+
+.watchlist-matches a:hover {
+  background: #f2eeff;
+}
+
+.watchlist-matches a > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.watchlist-matches small {
+  font-size: 15px;
+}
+
+.watchlist-swatch {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+  background: var(--tone);
+}
+
+.watchlist-new {
+  background: var(--lime);
+}
+
 /* Severity guide */
 
 .severity-guide {
@@ -1262,6 +1375,27 @@ p {
 .feed-copy {
   margin-top: 6px;
   color: var(--ink-soft);
+}
+
+.feed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.watch-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.watch-button-active {
+  background: var(--lime);
+}
+
+.watch-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .feed-results-summary {
