@@ -2,6 +2,10 @@ import type { ComponentProps } from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock("next/form", () => ({
   default: (props: ComponentProps<"form">) => <form {...props} />,
 }));

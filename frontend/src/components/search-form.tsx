@@ -1,6 +1,7 @@
 import Form from "next/form";
 import Link from "next/link";
 
+import { BarcodeScanner } from "@/components/barcode-scanner";
 import { SearchButton } from "@/components/search-button";
 import { SearchIcon } from "@/components/ui/search-icon";
 import {
@@ -114,6 +115,7 @@ export function SearchForm({
           <SearchButton />
         </div>
       </Form>
+      <BarcodeScanner />
       <div className="search-support">
         {severityFilterAvailable ? (
           <div

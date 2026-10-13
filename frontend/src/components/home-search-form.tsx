@@ -3,6 +3,7 @@
 import { FormEvent, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { BarcodeScanner } from "@/components/barcode-scanner";
 import { SearchButton } from "@/components/search-button";
 import { SearchIcon } from "@/components/ui/search-icon";
 
@@ -47,6 +48,7 @@ export function HomeSearchForm() {
           <SearchButton pending={pending} />
         </div>
       </form>
+      <BarcodeScanner />
     </div>
   );
 }
