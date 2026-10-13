@@ -92,3 +92,34 @@ def test_fsis_window_skips_malformed_record_without_losing_valid_record() -> Non
     assert selected == [valid]
     assert skipped == 1
     assert missing == 0
+
+
+def test_file_transport_reads_a_browser_saved_snapshot(tmp_path) -> None:
+    from app.ingestion.fsis_client import FileFSISJSONTransport
+
+    raw = load_fixture("class_i_state_specific.json")
+    path = tmp_path / "recalls.json"
+    path.write_text("﻿" + json.dumps([raw]), encoding="utf-8")
+
+    assert FSISClient(FileFSISJSONTransport(path)).fetch_snapshot() == [raw]
+
+
+@pytest.mark.parametrize(
+    ("content", "message"),
+    [
+        ("<HTML><TITLE>Access Denied</TITLE></HTML>", "web page"),
+        ("{not json", "not valid JSON"),
+        ("[]", "list of FSIS recalls"),
+        ('{"field_title": "x"}', "list of FSIS recalls"),
+    ],
+)
+def test_file_transport_rejects_files_that_are_not_api_data(
+    tmp_path, content, message
+) -> None:
+    from app.ingestion.fsis_client import FileFSISJSONTransport, FSISSnapshotFileError
+
+    path = tmp_path / "recalls.json"
+    path.write_text(content)
+
+    with pytest.raises(FSISSnapshotFileError, match=message):
+        FileFSISJSONTransport(path).get_json("ignored")

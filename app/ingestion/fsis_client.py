@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -25,6 +26,38 @@ FSIS_API_REQUEST_HEADERS = {
 
 class FSISJSONTransport(Protocol):
     def get_json(self, url: str) -> Any: ...
+
+
+class FSISSnapshotFileError(ValueError):
+    """The saved file is not a USDA FSIS API response."""
+
+
+class FileFSISJSONTransport:
+    """Reads a snapshot a person saved from the FSIS API in their browser.
+
+    FSIS's edge firewall refuses automated clients, so an operator can open the
+    API URL in a browser, save the JSON, and feed it through the normal pipeline.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    def get_json(self, url: str) -> Any:
+        text = self.path.read_text(encoding="utf-8-sig")
+        if text.lstrip()[:1] == "<":
+            raise FSISSnapshotFileError(
+                f"{self.path} is a web page, not API data. Open the FSIS API URL "
+                "in your browser and save the page that shows JSON."
+            )
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise FSISSnapshotFileError(f"{self.path} is not valid JSON: {exc}") from exc
+        if not isinstance(payload, list) or not payload:
+            raise FSISSnapshotFileError(
+                f"{self.path} does not contain a list of FSIS recalls."
+            )
+        return payload
 
 
 class UrllibFSISJSONTransport:

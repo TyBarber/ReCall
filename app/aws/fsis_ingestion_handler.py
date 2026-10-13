@@ -7,7 +7,7 @@ import boto3
 
 from app.config import Settings
 from app.ingestion.fsis_aws_pipeline import USDAFSISAWSIngestionPipeline
-from app.ingestion.fsis_client import FSISClient
+from app.ingestion.fsis_client import FSISClient, FSISJSONTransport
 from app.ingestion.fsis_diagnostics import run_fsis_connectivity_diagnostics
 from app.logging import configure_logging
 from app.services.checkpoint import DynamoDBCheckpointStore
@@ -15,10 +15,12 @@ from app.services.queue import SQSNormalizationPublisher
 from app.services.raw_archive import S3RawArchive
 
 
-def build_pipeline(settings: Settings) -> USDAFSISAWSIngestionPipeline:
+def build_pipeline(
+    settings: Settings, transport: FSISJSONTransport | None = None
+) -> USDAFSISAWSIngestionPipeline:
     session = boto3.session.Session(region_name=settings.aws_region)
     return USDAFSISAWSIngestionPipeline(
-        client=FSISClient(base_url=settings.fsis_api_url),
+        client=FSISClient(transport, base_url=settings.fsis_api_url),
         archive=S3RawArchive(session.client("s3"), settings.require("raw_bucket_name")),
         publisher=SQSNormalizationPublisher(
             session.client("sqs"), settings.require("normalization_queue_url")

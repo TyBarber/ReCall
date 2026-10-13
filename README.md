@@ -146,6 +146,22 @@ terraform -chdir=infrastructure/terraform plan -out=recall-dev.tfplan
 
 Copy `infrastructure/terraform/terraform.tfvars.example` to an untracked environment-specific `.tfvars` file if overriding defaults. Review the plan before any apply. Milestone 2 implementation and validation do not run `terraform apply`.
 
+### USDA FSIS browser-assisted import
+
+FSIS's Akamai edge firewall returns `403 Access Denied` to automated clients,
+including the ingestion Lambda, while real browsers succeed. Until FSIS allows
+ReCall's requests, import USDA data by hand:
+
+1. Open `https://www.fsis.usda.gov/fsis/api/recall/v/1?field_translation_language=en`
+   in a browser and save it as a `.json` file (File → Save Page As).
+2. Run `.venv/bin/python -m scripts.import_fsis_file ~/Downloads/recalls.json`
+   with AWS credentials for the account.
+
+The file goes through the same S3 archive, normalization queue, and checkpoint
+steps as the scheduled Lambda. Resource names are read from the deployed
+`recall-dev-usda-fsis-ingestion` function. Keep the USDA FSIS schedule disabled
+while the block remains.
+
 Important AWS environment variables are supplied by Terraform: `EXECUTION_ENVIRONMENT`, `REPOSITORY_BACKEND`, `AWS_REGION`, `DYNAMODB_TABLE_NAME`, `INGESTION_STATE_TABLE_NAME`, `RAW_BUCKET_NAME`, `NORMALIZATION_QUEUE_URL`, and ingestion-window settings. The USDA FSIS schedule is initially disabled so its first complete-history import can be invoked and validated manually before scheduling is enabled in a separately reviewed Terraform change.
 
 ## Security and operations
