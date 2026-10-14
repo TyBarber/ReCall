@@ -37,3 +37,8 @@ output "usda_fsis_scheduler_dlq_url" {
   description = "USDA FSIS EventBridge Scheduler dead-letter queue URL."
   value       = aws_sqs_queue.fsis_scheduler_dlq.id
 }
+
+output "feedback_table_name" {
+  description = "DynamoDB table for alert signups, survey responses, and Watch-click counts."
+  value       = aws_dynamodb_table.feedback.name
+}

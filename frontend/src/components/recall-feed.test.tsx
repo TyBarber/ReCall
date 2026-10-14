@@ -5,11 +5,31 @@ import { RecallFeed } from "@/components/recall-feed";
 import { recallFixture } from "@/test/fixtures";
 
 describe("RecallFeed", () => {
+  it("offers to watch a search with no results", () => {
+    render(
+      <RecallFeed
+        recalls={[]}
+        search="not a product"
+        currentPage={1}
+        limit={12}
+        totalCount={0}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "No recalls found for “not a product”" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Watch “not a product”" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows a helpful filtered empty state", () => {
     render(
       <RecallFeed
         recalls={[]}
         search="not a product"
+        status="Completed"
         currentPage={1}
         limit={12}
         totalCount={0}

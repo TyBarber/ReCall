@@ -32,6 +32,8 @@ export function RecallFeed({
         filtered={Boolean(
           search || status || source || recordType || level || currentPage > 1,
         )}
+        search={currentPage === 1 ? search : undefined}
+        otherFilters={Boolean(status || source || recordType || level)}
       />
     );
   }

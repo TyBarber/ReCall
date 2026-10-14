@@ -1959,3 +1959,338 @@ a.page-number-link:hover {
     transform: none;
   }
 }
+
+/* Watch prompts */
+
+.watch-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 28px;
+  padding: 18px 22px;
+  border: var(--outline);
+  border-radius: 20px;
+  background: #f2eeff;
+  box-shadow: var(--shadow-sm);
+}
+
+.watch-strip p {
+  flex: 1 1 360px;
+}
+
+.watch-strip-active {
+  background: #f1fbd3;
+}
+
+.empty-state-watch {
+  max-width: 720px;
+}
+
+.empty-watch {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 20px;
+  border: var(--outline-thin);
+  border-radius: 18px;
+  background: #f2eeff;
+}
+
+.detail-watch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+}
+
+.detail-watch small {
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+.watchlist-teaser-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px 40px;
+  padding: clamp(24px, 4vw, 36px);
+  border: var(--outline);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.watchlist-teaser-copy {
+  display: flex;
+  flex: 1 1 380px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.watchlist-teaser-copy h2 {
+  font-size: clamp(28px, 3.6vw, 34px);
+}
+
+.watchlist-teaser-form {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border: var(--outline-thin);
+  border-radius: 20px;
+  background: #f2eeff;
+}
+
+.watchlist-teaser-form label,
+.feedback-form > label:not(.feedback-check):not(.feedback-trap),
+.survey-question legend {
+  font-weight: 700;
+}
+
+.watchlist-teaser-form input,
+.feedback-form input[type="email"],
+.feedback-form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: var(--outline-thin);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.watchlist-teaser-form button {
+  align-self: flex-start;
+  white-space: nowrap;
+}
+
+/* How it works page */
+
+.hiw-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hiw-jump .chip {
+  border-color: #ffffff;
+  background: transparent;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.hiw-jump .chip:hover {
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.hiw-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding-bottom: 56px;
+}
+
+.hiw-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: clamp(24px, 4vw, 40px);
+  border: var(--outline);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  scroll-margin-top: 24px;
+}
+
+.hiw-card h2 {
+  font-size: clamp(28px, 3.6vw, 36px);
+}
+
+.hiw-card h3 {
+  margin-bottom: 8px;
+  font-size: 22px;
+}
+
+.hiw-card-feature {
+  background: #f2eeff;
+}
+
+.hiw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding-left: 24px;
+  list-style: disc;
+}
+
+.hiw-list li::marker {
+  color: var(--purple);
+}
+
+/* Links inside running text (Tailwind's reset removes underlines). */
+.watchlist-note a,
+.watch-strip a,
+.hiw-card p a {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.hiw-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.hiw-note {
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+.hiw-steps {
+  width: 100%;
+}
+
+.hiw-card .footer-freshness {
+  font-weight: 700;
+}
+
+/* Feedback forms */
+
+.feedback-form {
+  display: flex;
+  width: 100%;
+  max-width: 640px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feedback-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.feedback-inline input {
+  flex: 1 1 240px;
+}
+
+.feedback-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.feedback-check input {
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  flex: 0 0 auto;
+  accent-color: var(--purple);
+}
+
+.feedback-trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.feedback-error {
+  color: #b3001b;
+  font-weight: 700;
+}
+
+.feedback-success {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 640px;
+  padding: 18px 20px;
+  border: var(--outline-thin);
+  border-radius: 18px;
+  background: #f1fbd3;
+}
+
+.survey-form {
+  gap: 20px;
+}
+
+.survey-form > button {
+  align-self: flex-start;
+}
+
+.survey-question {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.survey-question legend {
+  margin-bottom: 10px;
+}
+
+.survey-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.survey-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.survey-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.survey-option span {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 8px 16px;
+  border: var(--outline-thin);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.survey-option input:checked + span {
+  background: var(--lime);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.survey-option input:focus-visible + span {
+  outline: 4px solid var(--purple);
+  outline-offset: 3px;
+}
+
+.survey-comment span {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+@media (max-width: 560px) {
+  .watch-strip .watch-button,
+  .feedback-inline .primary-button {
+    width: 100%;
+  }
+}

@@ -330,3 +330,20 @@ export function latestCheck(
     .sort();
   return times.at(-1) ?? null;
 }
+
+const COMPANY_SUFFIX =
+  /[,\s]+(?:inc|incorporated|llc|l\.l\.c|ltd|limited|co|corp|corporation|company|lp|llp|plc|us|usa)\.?$/i;
+
+/**
+ * A company name trimmed to what search can match across records, e.g.
+ * "Taylor Fresh Foods, Inc." becomes "Taylor Fresh Foods", so a watch also
+ * finds recalls filed as "Taylor Fresh Foods Inc".
+ */
+export function companyWatchTerm(company: string): string | null {
+  let name = company.trim().replace(/\s+/g, " ");
+  for (let previous = ""; previous !== name; ) {
+    previous = name;
+    name = name.replace(COMPANY_SUFFIX, "").trim();
+  }
+  return name.length >= 3 ? name.slice(0, 80) : null;
+}

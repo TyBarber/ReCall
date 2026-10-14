@@ -182,3 +182,14 @@ describe("recall display formatting", () => {
     ).toBe("Toji Co.");
   });
 });
+
+describe("companyWatchTerm", () => {
+  it("drops corporate suffixes so a watch matches every filing", async () => {
+    const { companyWatchTerm } = await import("@/lib/format");
+    expect(companyWatchTerm("Taylor Fresh Foods, Inc.")).toBe("Taylor Fresh Foods");
+    expect(companyWatchTerm("Fontanini Foods, LLC")).toBe("Fontanini Foods");
+    expect(companyWatchTerm("Acme Co. Inc")).toBe("Acme");
+    expect(companyWatchTerm("Kerry")).toBe("Kerry");
+    expect(companyWatchTerm("  Co ")).toBeNull();
+  });
+});

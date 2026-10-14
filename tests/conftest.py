@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.models.recall import Recall, RecallSource
+from app.services.feedback_store import SQLiteFeedbackStore
 from app.services.sqlite_repository import SQLiteRecallRepository
 
 
@@ -41,7 +42,12 @@ def sample_recall() -> Recall:
 
 
 @pytest.fixture
-def client(repository, sample_recall):
+def feedback_store(tmp_path):
+    return SQLiteFeedbackStore(tmp_path / "feedback.db")
+
+
+@pytest.fixture
+def client(repository, sample_recall, feedback_store):
     repository.upsert(sample_recall)
-    with TestClient(create_app(repository)) as test_client:
+    with TestClient(create_app(repository, feedback=feedback_store)) as test_client:
         yield test_client

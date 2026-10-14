@@ -151,6 +151,12 @@ resource "aws_iam_role_policy" "api" {
         Effect   = "Allow"
         Action   = ["dynamodb:GetItem"]
         Resource = aws_dynamodb_table.ingestion_state.arn
+      },
+      {
+        # Write-only: the public API can add feedback but never read it back.
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
+        Resource = aws_dynamodb_table.feedback.arn
       }
     ]
   })

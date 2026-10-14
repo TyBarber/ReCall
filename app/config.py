@@ -29,6 +29,8 @@ class Settings:
     fsis_api_url: str
     fsis_ingestion_overlap_days: int
     fsis_ingestion_max_records: int
+    feedback_table_name: str | None
+    feedback_database_path: Path
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -57,6 +59,10 @@ class Settings:
             ),
             fsis_ingestion_max_records=int(
                 os.getenv("FSIS_INGESTION_MAX_RECORDS", "5000")
+            ),
+            feedback_table_name=os.getenv("FEEDBACK_TABLE_NAME"),
+            feedback_database_path=Path(
+                os.getenv("FEEDBACK_DATABASE_PATH", "data/feedback.db")
             ),
         )
 

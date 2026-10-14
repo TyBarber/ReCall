@@ -3,7 +3,9 @@ import Link from "next/link";
 import { FoodIcon } from "@/components/food-icon";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
+import { WatchButton } from "@/components/watch-button";
 import {
+  companyWatchTerm,
   displayCompany,
   displayProductName,
   softenCapitals,
@@ -118,6 +120,10 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
   const severity = recallSeverity(recall);
   const productName = displayProductName(recall.product_name);
   const fullProductName = recall.product_name.trim().replace(/\s+/g, " ");
+  const watchedCompany = recallingFirm ?? brand ?? displayCompany(recall);
+  const companyTerm = watchedCompany
+    ? companyWatchTerm(softenCapitals(watchedCompany))
+    : null;
 
   return (
     <main className="shell detail-page">
@@ -160,6 +166,16 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
               <p className="detail-company-brand">
                 <strong>Brand</strong> {brand ? softenCapitals(brand) : null}
               </p>
+            ) : null}
+            {companyTerm ? (
+              <div className="detail-watch">
+                <WatchButton
+                  label={companyTerm}
+                  placement="detail"
+                  term={companyTerm}
+                />
+                <small>New recalls from them get flagged on your home page.</small>
+              </div>
             ) : null}
           </div>
         ) : (

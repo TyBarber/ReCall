@@ -76,3 +76,24 @@ resource "aws_dynamodb_table" "ingestion_state" {
     enabled = true
   }
 }
+
+# Alert-interest emails, questionnaire answers, and anonymous Watch-click
+# counters. Item shapes are documented in app/services/feedback_store.py.
+resource "aws_dynamodb_table" "feedback" {
+  name         = "${local.name_prefix}-feedback"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+}

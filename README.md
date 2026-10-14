@@ -14,7 +14,9 @@ It pulls official records from the **FDA** (food enforcement reports) and **USDA
 - **Barcode scanning.** Tap "Scan a barcode" to read a UPC/EAN with your phone or laptop camera and search for it. This works on iOS Safari too. If camera access is blocked, the app explains how to type the code instead.
 - **Plain-language severity.** Recalls are color-coded as Serious, Moderate, or Low risk. The official FDA/USDA class is shown in small print.
 - **Filters.** Filter by how serious it is, source (FDA or USDA FSIS), status, and record type (recall or public health alert). Quick-search chips cover common searches.
-- **Watchlist.** Save a search (a brand, product, or barcode). The home page shows its newest matches and flags anything listed since your last visit. The watchlist is stored in your browser only, and the UI says plainly that ReCall doesn't send alerts yet.
+- **Watchlist.** Save a search (a brand, product, or barcode), or the company behind a recall. The home page shows the newest matches and flags anything listed since your last visit. The watchlist is stored in your browser only, and the UI says plainly that ReCall doesn't send alerts yet.
+- **Watch prompts where they matter.** You can watch from four places: an explainer card on the home page (shown until you watch something), a search with no results ("No recalls found. Want to keep an eye on it?"), a strip above search results, and recall detail pages ("Watch Taylor Fresh Foods"). Clicks are counted per placement to see which ones people use.
+- **How it works page.** A plain-language page explaining where the data comes from, what ReCall changes and doesn't, how the watchlist works, and what's stored. It also has an email interest list for alerts and a three-question anonymous questionnaire.
 - **Detail pages.** Each recall shows why it was recalled, key dates, the affected product, where it was distributed, the product and lot codes to check against your package, and a link to the source data.
 - **Freshness.** "Checked 5 minutes ago" stickers show when each source was last successfully ingested.
 - **Readable names.** Raw agency text is turned into short product names. Packaging noise is trimmed, mangled characters are fixed, all-caps company names are cleaned up, and food-category icons are added.
@@ -47,6 +49,7 @@ It pulls official records from the **FDA** (food enforcement reports) and **USDA
 - **API.** FastAPI runs locally with uvicorn and on Lambda with Mangum behind API Gateway.
 - **Cost limits.** The API Lambda reuses one table scan for five minutes. The frontend caches API responses for five minutes. API Gateway applies rate and burst throttles, and an optional AWS budget sends email alerts.
 - **Logging.** Structured JSON logs carry ingestion, recall, source, message, and request IDs.
+- **Feedback storage.** Alert signups, questionnaire answers, and daily Watch-click counters live in one DynamoDB table. Signups are keyed by address, so repeat signups don't duplicate. The API role can write to this table but not read it.
 - **Infrastructure.** All infrastructure is defined in Terraform: IAM, logs, alarms, queues, storage, compute, the API, schedules, and the budget.
 - **Frontend security.** Security headers are set: nosniff, referrer policy, anti-framing, HSTS, and a permissions policy that allows only the camera.
 
@@ -88,6 +91,11 @@ Design decisions are recorded as ADRs in [`docs/architecture`](docs/architecture
 | `GET /recalls` | List and search recalls. Takes `search`, `source=fda\|usda_fsis`, `status`, `record_type=recall\|public_health_alert`, `classification=class_i\|class_ii\|class_iii`, `sort=newest`, `limit` (≤500), and `offset`. Returns the total in `X-Total-Count`. |
 | `GET /recalls/{id}` | A single recall |
 | `GET /freshness` | When each source was last successfully checked |
+| `POST /alerts/signups` | Add `{email, watch_terms}` to the alerts interest list |
+| `POST /survey/responses` | Save an anonymous questionnaire response |
+| `POST /events/watch` | Count a Watch click: `{placement: home_teaser\|empty_results\|results\|detail}` |
+
+The frontend calls the `POST` routes through its own `/api/alerts`, `/api/survey`, and `/api/events/watch` routes, because the API doesn't accept cross-origin requests. Those routes also drop submissions from a hidden bot-trap field.
 
 ## Running locally
 
@@ -146,6 +154,17 @@ To override defaults, copy `infrastructure/terraform/terraform.tfvars.example` t
 
 Terraform supplies these environment variables to the Lambdas: `EXECUTION_ENVIRONMENT`, `REPOSITORY_BACKEND`, `AWS_REGION`, `DYNAMODB_TABLE_NAME`, `INGESTION_STATE_TABLE_NAME`, `RAW_BUCKET_NAME`, `NORMALIZATION_QUEUE_URL`, and the ingestion-window settings.
 
+### Reading feedback
+
+Alert signups, survey answers, and Watch-click counts are stored in the `recall-dev-feedback` table (`terraform output feedback_table_name`):
+
+```bash
+aws dynamodb scan --table-name recall-dev-feedback \
+  --filter-expression "kind = :k" --expression-attribute-values '{":k":{"S":"watch_clicks"}}'
+```
+
+Use `alert_signup` or `survey_response` as the `kind` to see the others.
+
 ### USDA FSIS import (manual, for now)
 
 FSIS's Akamai firewall returns `403 Access Denied` to automated clients, including the ingestion Lambda, while real browsers get through. Until that changes, the FSIS schedule stays **disabled**, and USDA data is imported by hand:
@@ -179,14 +198,14 @@ python -m scripts.backfill_fda_detail_fields --bucket <raw-archive-bucket> --tab
 - **S3.** The bucket is encrypted, versioned, private, and lifecycle-managed (raw data is kept for 365 days by default). Object Lock is intentionally off.
 - **Lambda permissions.** The ingestion and normalization Lambdas have no S3 delete permission.
 - **API throttling.** API Gateway throttles the default route (10 req/s, burst of 20 by default).
-- **Authentication.** The public API is read-only and unauthenticated.
+- **Authentication.** The public API is unauthenticated. It is read-only except for the three feedback routes, which validate every field strictly and are covered by API Gateway throttling.
 - **Alarms.** CloudWatch alarms cover Lambda errors, DLQ depth, queue age, and throttles. They don't notify anyone yet, so check them in the AWS console.
 
 ## Roadmap
 
 ### Alerts and accounts
 
-- Email or push notifications when a new recall matches a watched search
+- Email or push notifications when a new recall matches a watched search. An interest list on the How it works page is collecting emails, and Watch-click counts show demand.
 - Optional accounts so a watchlist syncs across devices instead of living in one browser
 
 ### Automated USDA FSIS ingestion

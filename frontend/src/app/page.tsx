@@ -122,9 +122,14 @@ export default async function Home() {
             ReCall makes public FDA and USDA FSIS food safety data easier to
             search and understand, so you can quickly check food in your home.
           </p>
-          <Link className="chunky-button" href="/recalls">
-            Browse all recalls <span aria-hidden="true">→</span>
-          </Link>
+          <div className="state-actions">
+            <Link className="chunky-button" href="/recalls">
+              Browse all recalls <span aria-hidden="true">→</span>
+            </Link>
+            <Link className="secondary-button" href="/how-it-works">
+              How ReCall works
+            </Link>
+          </div>
         </div>
         <ol className="home-steps">
           <li>

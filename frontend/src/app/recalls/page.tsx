@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { FreshnessSticker } from "@/components/freshness";
 import { RecallFeed } from "@/components/recall-feed";
 import { SearchForm } from "@/components/search-form";
-import { WatchButton } from "@/components/watch-button";
+import { WatchStrip } from "@/components/watch-prompt";
 import { getFreshness, getRecallPage } from "@/lib/api/recalls";
 import {
   severityByKey,
@@ -117,12 +117,12 @@ export default async function RecallDirectory({
               </p>
             </div>
             <div className="feed-actions">
-              {search ? <WatchButton term={search} /> : null}
               <p className="feed-results-summary" aria-live="polite">
                 {totalCount} {totalCount === 1 ? "recall" : "recalls"}
               </p>
             </div>
           </div>
+          {search && recalls.length > 0 ? <WatchStrip term={search} /> : null}
           <RecallFeed
             recalls={recalls}
             search={search || undefined}

@@ -116,6 +116,7 @@ resource "aws_lambda_function" "api" {
       REPOSITORY_BACKEND         = "dynamodb"
       DYNAMODB_TABLE_NAME        = aws_dynamodb_table.recalls.name
       INGESTION_STATE_TABLE_NAME = aws_dynamodb_table.ingestion_state.name
+      FEEDBACK_TABLE_NAME        = aws_dynamodb_table.feedback.name
       LOG_LEVEL                  = "INFO"
     }
   }

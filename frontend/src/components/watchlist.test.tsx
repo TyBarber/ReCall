@@ -35,13 +35,33 @@ describe("watchlist", () => {
     expect(result.current.isWatching("Peanut butter")).toBe(false);
   });
 
-  it("toggles watching from the results page", () => {
-    render(<WatchButton term="Kerry" />);
+  it("toggles watching and counts only new watches by placement", () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 202 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<WatchButton placement="results" term="Kerry" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Watch “Kerry”" }));
     expect(
       screen.getByRole("button", { name: "Watching “Kerry”" }),
     ).toHaveAttribute("aria-pressed", "true");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/events/watch");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      placement: "results",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Watching “Kerry”" }));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the company when watching from a recall page", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null)));
+    render(<WatchButton label="Taylor Fresh Foods" placement="detail" term="Taylor Fresh Foods" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Watch Taylor Fresh Foods" }));
+    expect(
+      screen.getByRole("button", { name: "Watching Taylor Fresh Foods" }),
+    ).toBeInTheDocument();
   });
 
   it("treats recalls listed after the last visit as new", () => {
@@ -84,8 +104,42 @@ describe("watchlist", () => {
     expect(screen.queryByText("New")).not.toBeInTheDocument();
   });
 
-  it("renders nothing until something is watched", () => {
-    const { container } = render(<Watchlist />);
-    expect(container).toBeEmptyDOMElement();
+  it("explains the feature and lets people watch from the home page when empty", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ results: [{ term: "Jif", recalls: [] }] }), {
+        status: 200,
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Watchlist />);
+
+    expect(
+      screen.getByRole("heading", { name: "Keep an eye on the foods you buy" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Get notified when they launch" }),
+    ).toHaveAttribute("href", "/how-it-works#alerts");
+
+    fireEvent.change(screen.getByLabelText("What do you want to watch?"), {
+      target: { value: "  Jif " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Watch it" }));
+
+    expect(await screen.findByRole("heading", { name: "Your watchlist" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Jif" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/events/watch");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      placement: "home_teaser",
+    });
+  });
+
+  it("ignores an empty watch from the home page", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Watchlist />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Watch it" }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", { name: "Your watchlist" })).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -12,11 +13,18 @@ from app.models.recall import (
     RecallSort,
     RecallSource,
 )
+from app.models.feedback import (
+    AlertSignupRequest,
+    SurveyResponseRequest,
+    WatchEventRequest,
+)
 from app.services.checkpoint import CheckpointReader
+from app.services.feedback_store import FeedbackStore
 from app.services.recall_query import query_recalls
 from app.services.repository import RecallRepository
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def get_repository(request: Request) -> RecallRepository:
@@ -25,6 +33,20 @@ def get_repository(request: Request) -> RecallRepository:
 
 def get_checkpoints(request: Request) -> CheckpointReader | None:
     return request.app.state.checkpoints
+
+
+def get_feedback(request: Request) -> FeedbackStore:
+    feedback: FeedbackStore | None = request.app.state.feedback
+    if feedback is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Feedback is not available",
+        )
+    return feedback
+
+
+class Accepted(BaseModel):
+    status: str = "accepted"
 
 
 class SourceFreshness(BaseModel):
@@ -100,3 +122,52 @@ def get_freshness(
             )
         )
     return Freshness(sources=sources)
+
+
+@router.post(
+    "/alerts/signups",
+    response_model=Accepted,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def create_alert_signup(
+    signup: AlertSignupRequest,
+    feedback: FeedbackStore = Depends(get_feedback),
+) -> Accepted:
+    """Adds an address to the alerts interest list. Alerts are not sent yet."""
+    feedback.save_alert_signup(signup)
+    # The address itself is never logged.
+    logger.info("alert signup saved", extra={"watch_term_count": len(signup.watch_terms)})
+    return Accepted()
+
+
+@router.post(
+    "/survey/responses",
+    response_model=Accepted,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def create_survey_response(
+    response: SurveyResponseRequest,
+    feedback: FeedbackStore = Depends(get_feedback),
+) -> Accepted:
+    if response.is_empty():
+        raise HTTPException(
+            status_code=422,
+            detail="Answer at least one question",
+        )
+    feedback.save_survey_response(response)
+    logger.info("survey response saved")
+    return Accepted()
+
+
+@router.post(
+    "/events/watch",
+    response_model=Accepted,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def record_watch_event(
+    event: WatchEventRequest,
+    feedback: FeedbackStore = Depends(get_feedback),
+) -> Accepted:
+    """Counts a Watch click by page placement; stores no personal data."""
+    feedback.record_watch(event.placement)
+    return Accepted()

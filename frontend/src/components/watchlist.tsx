@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { BookmarkIcon } from "@/components/watch-button";
+import { recordWatch } from "@/lib/feedback";
 import { displayProductName, formatRecallDate, recallSeverity } from "@/lib/format";
 import type { WatchlistMatch, WatchlistResult } from "@/lib/types";
-import { useWatchlist, type WatchItem } from "@/lib/watchlist";
+import { MAX_TERM_LENGTH, useWatchlist, type WatchItem } from "@/lib/watchlist";
 
 type Lookup =
   | { kind: "loading" }
@@ -26,7 +28,75 @@ function searchHref(term: string): string {
   return `/recalls?search=${encodeURIComponent(term)}&page=1`;
 }
 
+const noopSubscribe = () => () => undefined;
+
+/** False during server rendering and hydration, true once running in the browser. */
+function useHydrated(): boolean {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
+
+/** Shown on the home page until something is watched, so people find the feature. */
+export function WatchlistTeaser() {
+  const watchlist = useWatchlist();
+  const [term, setTerm] = useState("");
+
+  return (
+    <section
+      className="shell watchlist watchlist-teaser"
+      aria-labelledby="watchlist-teaser-title"
+      id="watchlist"
+    >
+      <div className="watchlist-teaser-card">
+        <div className="watchlist-teaser-copy">
+          <span className="sticker">New</span>
+          <h2 id="watchlist-teaser-title">Keep an eye on the foods you buy</h2>
+          <p>
+            Watch a food, brand, or barcode. Any recall that matches shows up
+            right here, and new ones get flagged when you come back. No account
+            needed. Your watchlist stays on this device.
+          </p>
+          <p className="watchlist-note">
+            Email alerts are coming.{" "}
+            <Link href="/how-it-works#alerts">Get notified when they launch</Link>.
+          </p>
+        </div>
+        <form
+          className="watchlist-teaser-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!term.trim()) {
+              return;
+            }
+            watchlist.add(term);
+            recordWatch("home_teaser");
+            setTerm("");
+          }}
+        >
+          <label htmlFor="watch-term">What do you want to watch?</label>
+          <input
+            id="watch-term"
+            maxLength={MAX_TERM_LENGTH}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="e.g. Jif, cheddar, or a barcode number"
+            type="text"
+            value={term}
+          />
+          <button className="primary-button" type="submit">
+            <BookmarkIcon filled={false} />
+            Watch it
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
 export function Watchlist() {
+  const hydrated = useHydrated();
   const watchlist = useWatchlist();
   const [lookup, setLookup] = useState<Lookup>({ kind: "loading" });
   const termsKey = watchlist.items.map((item) => item.term).join("\n");
@@ -54,8 +124,11 @@ export function Watchlist() {
     return () => controller.abort();
   }, [termsKey]);
 
-  if (watchlist.items.length === 0) {
+  if (!hydrated) {
     return null;
+  }
+  if (watchlist.items.length === 0) {
+    return <WatchlistTeaser />;
   }
 
   const resultFor = (item: WatchItem) =>
@@ -72,7 +145,11 @@ export function Watchlist() {
   );
 
   return (
-    <section className="shell watchlist" aria-labelledby="watchlist-title">
+    <section
+      className="shell watchlist"
+      aria-labelledby="watchlist-title"
+      id="watchlist"
+    >
       <div className="section-heading">
         <div className="section-title">
           <h2 id="watchlist-title">Your watchlist</h2>
@@ -92,7 +169,7 @@ export function Watchlist() {
       </div>
       <p className="watchlist-note">
         Saved on this device only. ReCall can’t send alerts yet, so check back
-        here.
+        here, or <Link href="/how-it-works#alerts">get notified when alerts launch</Link>.
       </p>
       {lookup.kind === "error" ? (
         <p className="watchlist-note" role="status">

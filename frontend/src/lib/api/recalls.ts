@@ -21,7 +21,7 @@ export class RecallApiError extends Error {
 
 const API_CACHE_SECONDS = 300;
 
-function apiBaseUrl(): string {
+export function apiBaseUrl(): string {
   const value = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
   if (!value) {
     throw new RecallApiError(
