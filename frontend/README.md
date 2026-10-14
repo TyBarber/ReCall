@@ -28,7 +28,9 @@ npm test
 npm run build
 ```
 
-The frontend currently provides a searchable current-recall feed, status
-filtering, offset pagination, recall details, responsive layouts, and loading,
-empty, not-found, and error states. It intentionally does not include accounts,
-pantries, alerts, recommendations, payments, or barcode scanning.
+The frontend provides search by product, brand, reason, or UPC; camera barcode
+scanning; severity, source, status, and record-type filters; a per-device
+watchlist; source freshness; recall detail pages; responsive layouts; and
+loading, empty, not-found, and error states. It does not generate safety advice
+and does not yet include accounts or alerts. See the [project README](../README.md)
+for screenshots and the roadmap.
