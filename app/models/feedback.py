@@ -21,6 +21,11 @@ class WatchPlacement(StrEnum):
     DETAIL = "detail"
 
 
+class SignupSource(StrEnum):
+    HOME = "home"
+    HOW_IT_WORKS = "how_it_works"
+
+
 class HeardFrom(StrEnum):
     FRIEND_OR_FAMILY = "friend_or_family"
     SOCIAL_MEDIA = "social_media"
@@ -48,6 +53,7 @@ class _StrictModel(BaseModel):
 class AlertSignupRequest(_StrictModel):
     email: str = Field(min_length=3, max_length=MAX_EMAIL_LENGTH)
     watch_terms: list[str] = Field(default_factory=list, max_length=MAX_WATCH_TERMS)
+    source: SignupSource = SignupSource.HOW_IT_WORKS
 
     @field_validator("email")
     @classmethod

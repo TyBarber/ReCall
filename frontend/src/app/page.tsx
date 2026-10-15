@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 
+import { AlertsCallout } from "@/components/alerts-callout";
 import { EmptyState } from "@/components/empty-state";
 import { FoodIcon } from "@/components/food-icon";
 import { FreshnessSticker } from "@/components/freshness";
@@ -84,6 +85,8 @@ export default async function Home() {
         </div>
         <RecallSpotlight recall={spotlight} />
       </section>
+
+      <AlertsCallout />
 
       <Watchlist />
 

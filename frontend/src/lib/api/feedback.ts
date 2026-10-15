@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 import { apiBaseUrl } from "@/lib/api/recalls";
 
 const MAX_BODY_BYTES = 4_000;
@@ -7,6 +9,14 @@ type ForwardOptions = {
   path: string;
   /** Message shown when the backend rejects the input. */
   invalidMessage: string;
+  /**
+   * Runs after the response is sent, once the API has saved the submission,
+   * e.g. to send emails. Failures here never affect what the person sees.
+   */
+  onSaved?: (
+    submitted: Record<string, unknown>,
+    saved: Record<string, unknown>,
+  ) => Promise<void>;
 };
 
 async function readJsonObject(request: Request): Promise<Record<string, unknown> | null> {
@@ -32,7 +42,7 @@ async function readJsonObject(request: Request): Promise<Record<string, unknown>
  */
 export async function forwardFeedback(
   request: Request,
-  { path, invalidMessage }: ForwardOptions,
+  { path, invalidMessage, onSaved }: ForwardOptions,
 ): Promise<Response> {
   const body = await readJsonObject(request);
   if (!body) {
@@ -61,6 +71,14 @@ export async function forwardFeedback(
   }
 
   if (response.ok) {
+    if (onSaved) {
+      const saved = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      after(() =>
+        onSaved(body, saved ?? {}).catch((error: unknown) =>
+          console.error("Feedback follow-up failed", error),
+        ),
+      );
+    }
     return Response.json({ status: "accepted" }, { status: 202 });
   }
   if (response.status === 422) {

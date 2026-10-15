@@ -59,10 +59,6 @@ export function WatchlistTeaser() {
             right here, and new ones get flagged when you come back. No account
             needed. Your watchlist stays on this device.
           </p>
-          <p className="watchlist-note">
-            Email alerts are coming.{" "}
-            <Link href="/how-it-works#alerts">Get notified when they launch</Link>.
-          </p>
         </div>
         <form
           className="watchlist-teaser-form"
@@ -169,7 +165,7 @@ export function Watchlist() {
       </div>
       <p className="watchlist-note">
         Saved on this device only. ReCall can’t send alerts yet, so check back
-        here, or <Link href="/how-it-works#alerts">get notified when alerts launch</Link>.
+        here, or <Link href="#alerts">get notified when alerts launch</Link>.
       </p>
       {lookup.kind === "error" ? (
         <p className="watchlist-note" role="status">

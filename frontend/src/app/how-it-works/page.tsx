@@ -150,7 +150,7 @@ export default async function HowItWorks() {
             when it can. Searching and watching will always work without
             signing up.
           </p>
-          <AlertSignupForm />
+          <AlertSignupForm source="how_it_works" />
         </section>
 
         <section className="hiw-card" id="questions" aria-labelledby="questions-title">
@@ -174,13 +174,13 @@ export default async function HowItWorks() {
               page checks it, the searches are looked up but not saved.
             </li>
             <li>
-              <strong>Alert emails</strong> are stored only to tell you when
-              alerts launch, and to send them once they do. Your address is
-              never sold or shared.
+              <strong>Alert emails</strong> are used for one thank-you email
+              now, a note when alerts launch, and the alerts themselves. Your
+              address is never sold or shared.
             </li>
             <li>
               <strong>Questionnaire answers</strong> aren’t linked to your name
-              or email.
+              or email. They’re saved and sent to the ReCall team.
             </li>
             <li>
               <strong>We count visits and Watch clicks</strong> without

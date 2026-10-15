@@ -21,7 +21,9 @@ def _utc_now() -> datetime:
 
 
 class FeedbackStore(Protocol):
-    def save_alert_signup(self, signup: AlertSignupRequest) -> None: ...
+    def save_alert_signup(self, signup: AlertSignupRequest) -> bool:
+        """Saves a signup; returns True only the first time an address signs up."""
+        ...
 
     def save_survey_response(self, response: SurveyResponseRequest) -> None: ...
 
@@ -46,21 +48,28 @@ class DynamoDBFeedbackStore:
     def from_resource(cls, *, table_name: str, region_name: str) -> "DynamoDBFeedbackStore":
         return cls(boto3.resource("dynamodb", region_name=region_name).Table(table_name))
 
-    def save_alert_signup(self, signup: AlertSignupRequest) -> None:
+    def save_alert_signup(self, signup: AlertSignupRequest) -> bool:
         now = self.clock().isoformat()
-        self.table.update_item(
+        response = self.table.update_item(
             Key={"id": f"signup#{signup.email}"},
             UpdateExpression=(
                 "SET kind = :kind, email = :email, watch_terms = :terms, "
-                "updated_at = :now, created_at = if_not_exists(created_at, :now)"
+                "last_source = :source, updated_at = :now, "
+                "created_at = if_not_exists(created_at, :now), "
+                "#source = if_not_exists(#source, :source)"
             ),
+            ExpressionAttributeNames={"#source": "source"},
             ExpressionAttributeValues={
                 ":kind": "alert_signup",
                 ":email": signup.email,
                 ":terms": signup.watch_terms,
+                ":source": signup.source.value,
                 ":now": now,
             },
+            ReturnValues="UPDATED_OLD",
         )
+        # UPDATED_OLD only includes created_at when the item already existed.
+        return "created_at" not in response.get("Attributes", {})
 
     def save_survey_response(self, response: SurveyResponseRequest) -> None:
         item: dict[str, Any] = {
@@ -120,20 +129,23 @@ class SQLiteFeedbackStore:
             for row in self._connection.execute("SELECT document FROM feedback ORDER BY id")
         ]
 
-    def save_alert_signup(self, signup: AlertSignupRequest) -> None:
+    def save_alert_signup(self, signup: AlertSignupRequest) -> bool:
         item_id = f"signup#{signup.email}"
         now = self.clock().isoformat()
-        existing = self._get(item_id) or {}
+        existing = self._get(item_id)
         self._put(
             {
                 "id": item_id,
                 "kind": "alert_signup",
                 "email": signup.email,
                 "watch_terms": signup.watch_terms,
-                "created_at": existing.get("created_at", now),
+                "source": (existing or {}).get("source", signup.source.value),
+                "last_source": signup.source.value,
+                "created_at": (existing or {}).get("created_at", now),
                 "updated_at": now,
             }
         )
+        return existing is None
 
     def save_survey_response(self, response: SurveyResponseRequest) -> None:
         item: dict[str, Any] = {

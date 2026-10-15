@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { submitFeedback } from "@/lib/feedback";
 import { useWatchlist } from "@/lib/watchlist";
@@ -11,8 +11,48 @@ type FormState =
   | { kind: "done" }
   | { kind: "error"; message: string };
 
+const SIGNED_UP_KEY = "recall-alerts-signed-up";
+const SIGNED_UP_EVENT = "recall-alerts-signed-up-change";
+
+function readSignedUp(): boolean {
+  try {
+    return window.localStorage.getItem(SIGNED_UP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function subscribeSignedUp(onChange: () => void): () => void {
+  window.addEventListener(SIGNED_UP_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(SIGNED_UP_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function rememberSignedUp(): void {
+  try {
+    window.localStorage.setItem(SIGNED_UP_KEY, "1");
+  } catch {
+    // Without storage the confirmation still shows for this visit.
+  }
+  window.dispatchEvent(new Event(SIGNED_UP_EVENT));
+}
+
+/** True once this device has joined the alerts list, so it isn't asked again. */
+export function useAlertsSignedUp(): boolean {
+  return useSyncExternalStore(subscribeSignedUp, readSignedUp, () => false);
+}
+
+type AlertSignupFormProps = {
+  /** Where the form is shown, recorded with the signup. */
+  source: "home" | "how_it_works";
+};
+
 /** Collects an email for the alerts interest list. Alerts are not live yet. */
-export function AlertSignupForm() {
+export function AlertSignupForm({ source }: AlertSignupFormProps) {
+  const signedUp = useAlertsSignedUp();
   const watchlist = useWatchlist();
   const [email, setEmail] = useState("");
   const [includeWatchlist, setIncludeWatchlist] = useState(true);
@@ -20,7 +60,7 @@ export function AlertSignupForm() {
   const [state, setState] = useState<FormState>({ kind: "idle" });
   const watchedTerms = watchlist.items.map((item) => item.term);
 
-  if (state.kind === "done") {
+  if (state.kind === "done" || signedUp) {
     return (
       <div className="feedback-success" role="status">
         <strong>You’re on the list.</strong>
@@ -42,16 +82,22 @@ export function AlertSignupForm() {
         const result = await submitFeedback("/api/alerts", {
           email,
           watch_terms: includeWatchlist ? watchedTerms : [],
+          source,
           website,
         });
-        setState(result.ok ? { kind: "done" } : { kind: "error", message: result.error });
+        if (result.ok) {
+          rememberSignedUp();
+          setState({ kind: "done" });
+        } else {
+          setState({ kind: "error", message: result.error });
+        }
       }}
     >
-      <label htmlFor="alert-email">Email address</label>
+      <label htmlFor={`alert-email-${source}`}>Email address</label>
       <div className="feedback-inline">
         <input
           autoComplete="email"
-          id="alert-email"
+          id={`alert-email-${source}`}
           inputMode="email"
           maxLength={254}
           onChange={(event) => setEmail(event.target.value)}

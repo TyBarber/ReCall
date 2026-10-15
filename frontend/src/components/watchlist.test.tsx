@@ -116,9 +116,6 @@ describe("watchlist", () => {
     expect(
       screen.getByRole("heading", { name: "Keep an eye on the foods you buy" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Get notified when they launch" }),
-    ).toHaveAttribute("href", "/how-it-works#alerts");
 
     fireEvent.change(screen.getByLabelText("What do you want to watch?"), {
       target: { value: "  Jif " },

@@ -30,6 +30,11 @@ describe("Home", () => {
 
     expect(getRecalls).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Updated daily")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Get an email when food you watch is recalled",
+      }),
+    ).toBeInTheDocument();
     expect(getRecalls).toHaveBeenCalledWith({ limit: 7, sort: "newest" });
 
     const featured = screen.getByRole("article", { name: "Featured recall" });

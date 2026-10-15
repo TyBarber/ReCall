@@ -27,12 +27,28 @@ def test_alert_signup_is_saved_once_per_address(client, feedback_store) -> None:
     )
 
     assert first.status_code == 202
+    assert first.json() == {"status": "accepted", "first_signup": True}
     assert second.status_code == 202
+    assert second.json()["first_signup"] is False
     items = _items(feedback_store)
     assert list(items) == ["signup#ty@example.com"]
     signup = items["signup#ty@example.com"]
     assert signup["watch_terms"] == ["Cheese"]
+    assert signup["source"] == "how_it_works"
     assert signup["created_at"] <= signup["updated_at"]
+
+
+def test_alert_signup_records_where_it_came_from(client, feedback_store) -> None:
+    client.post("/alerts/signups", json={"email": "a@b.co", "source": "home"})
+    client.post("/alerts/signups", json={"email": "a@b.co", "source": "how_it_works"})
+
+    [signup] = feedback_store.items()
+    assert signup["source"] == "home"
+    assert signup["last_source"] == "how_it_works"
+    assert (
+        client.post("/alerts/signups", json={"email": "a@b.co", "source": "popup"}).status_code
+        == 422
+    )
 
 
 def test_alert_signup_rejects_bad_input(client, feedback_store) -> None:
@@ -112,7 +128,9 @@ class FakeFeedbackTable:
 
     def update_item(self, **kwargs):
         self.updates.append(kwargs)
-        return {}
+        return self.next_update_response
+
+    next_update_response: dict = {}
 
 
 def _fixed_clock() -> datetime:
@@ -123,14 +141,18 @@ def test_dynamodb_store_upserts_signups_by_address() -> None:
     table = FakeFeedbackTable()
     store = DynamoDBFeedbackStore(table, clock=_fixed_clock)
 
-    store.save_alert_signup(
-        AlertSignupRequest(email="Ty@Example.com", watch_terms=["Jif"])
-    )
+    signup = AlertSignupRequest(email="Ty@Example.com", watch_terms=["Jif"], source="home")
 
-    [update] = table.updates
+    assert store.save_alert_signup(signup) is True
+    table.next_update_response = {"Attributes": {"created_at": "2026-10-01T00:00:00+00:00"}}
+    assert store.save_alert_signup(signup) is False
+
+    update = table.updates[0]
     assert update["Key"] == {"id": "signup#ty@example.com"}
     assert "if_not_exists(created_at, :now)" in update["UpdateExpression"]
+    assert update["ReturnValues"] == "UPDATED_OLD"
     assert update["ExpressionAttributeValues"][":terms"] == ["Jif"]
+    assert update["ExpressionAttributeValues"][":source"] == "home"
 
 
 def test_dynamodb_store_puts_survey_responses() -> None:

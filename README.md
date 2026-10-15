@@ -17,6 +17,7 @@ It pulls official records from the **FDA** (food enforcement reports) and **USDA
 - **Watchlist.** Save a search (a brand, product, or barcode), or the company behind a recall. The home page shows the newest matches and flags anything listed since your last visit. The watchlist is stored in your browser only, and the UI says plainly that ReCall doesn't send alerts yet.
 - **Watch prompts where they matter.** You can watch from four places: an explainer card on the home page (shown until you watch something), a search with no results ("No recalls found. Want to keep an eye on it?"), a strip above search results, and recall detail pages ("Watch Taylor Fresh Foods"). Clicks are counted per placement to see which ones people use.
 - **How it works page.** A plain-language page explaining where the data comes from, what ReCall changes and doesn't, how the watchlist works, and what's stored. It also has an email interest list for alerts and a three-question anonymous questionnaire.
+- **Alerts interest list on the home page.** A "Coming soon" card just below the search asks for an email. Each signup records whether it came from the home page or the How it works page. First-time signups get a thank-you email, and the owner gets a notice for each new signup and each questionnaire response.
 - **Detail pages.** Each recall shows why it was recalled, key dates, the affected product, where it was distributed, the product and lot codes to check against your package, and a link to the source data.
 - **Freshness.** "Checked 5 minutes ago" stickers show when each source was last successfully ingested.
 - **Readable names.** Raw agency text is turned into short product names. Packaging noise is trimmed, mangled characters are fixed, all-caps company names are cleaned up, and food-category icons are added.
@@ -91,7 +92,7 @@ Design decisions are recorded as ADRs in [`docs/architecture`](docs/architecture
 | `GET /recalls` | List and search recalls. Takes `search`, `source=fda\|usda_fsis`, `status`, `record_type=recall\|public_health_alert`, `classification=class_i\|class_ii\|class_iii`, `sort=newest`, `limit` (≤500), and `offset`. Returns the total in `X-Total-Count`. |
 | `GET /recalls/{id}` | A single recall |
 | `GET /freshness` | When each source was last successfully checked |
-| `POST /alerts/signups` | Add `{email, watch_terms}` to the alerts interest list |
+| `POST /alerts/signups` | Add `{email, watch_terms, source: home\|how_it_works}` to the alerts interest list. Returns `first_signup` |
 | `POST /survey/responses` | Save an anonymous questionnaire response |
 | `POST /events/watch` | Count a Watch click: `{placement: home_teaser\|empty_results\|results\|detail}` |
 
@@ -153,6 +154,20 @@ terraform -chdir=infrastructure/terraform plan -out=recall-dev.tfplan
 To override defaults, copy `infrastructure/terraform/terraform.tfvars.example` to an untracked `.tfvars` file. That file is also where the budget alert email goes. Always review the plan before applying.
 
 Terraform supplies these environment variables to the Lambdas: `EXECUTION_ENVIRONMENT`, `REPOSITORY_BACKEND`, `AWS_REGION`, `DYNAMODB_TABLE_NAME`, `INGESTION_STATE_TABLE_NAME`, `RAW_BUCKET_NAME`, `NORMALIZATION_QUEUE_URL`, and the ingestion-window settings.
+
+### Email (Gmail + Nodemailer)
+
+The website's `/api/alerts` and `/api/survey` routes send email with Nodemailer through the project Gmail account. The emails go out after the response is sent, once the API has saved the submission. A failed email never loses a submission. Only an address's first signup triggers emails, so the public form can't be used to repeatedly email someone else.
+
+Set these in Vercel (Project → Settings → Environment Variables), never in the repo:
+
+| Variable | Value |
+| --- | --- |
+| `GMAIL_USER` | `recallproject01@gmail.com` |
+| `GMAIL_APP_PASSWORD` | A Google app password. Turn on 2-Step Verification for the account, then create one at myaccount.google.com/apppasswords |
+| `FEEDBACK_NOTIFY_TO` | Optional. Where signup and questionnaire notices go; defaults to `GMAIL_USER` |
+
+If they're missing, emails are skipped with a warning and submissions are still saved.
 
 ### Reading feedback
 

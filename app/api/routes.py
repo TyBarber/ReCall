@@ -49,6 +49,12 @@ class Accepted(BaseModel):
     status: str = "accepted"
 
 
+class SignupAccepted(Accepted):
+    # Lets the website send a thank-you email only once per address, so the
+    # public form can't be used to flood someone else's inbox.
+    first_signup: bool
+
+
 class SourceFreshness(BaseModel):
     source: RecallSource
     last_checked_at: datetime | None
@@ -126,18 +132,25 @@ def get_freshness(
 
 @router.post(
     "/alerts/signups",
-    response_model=Accepted,
+    response_model=SignupAccepted,
     status_code=status.HTTP_202_ACCEPTED,
 )
 def create_alert_signup(
     signup: AlertSignupRequest,
     feedback: FeedbackStore = Depends(get_feedback),
-) -> Accepted:
+) -> SignupAccepted:
     """Adds an address to the alerts interest list. Alerts are not sent yet."""
-    feedback.save_alert_signup(signup)
+    first_signup = feedback.save_alert_signup(signup)
     # The address itself is never logged.
-    logger.info("alert signup saved", extra={"watch_term_count": len(signup.watch_terms)})
-    return Accepted()
+    logger.info(
+        "alert signup saved",
+        extra={
+            "watch_term_count": len(signup.watch_terms),
+            "signup_source": signup.source.value,
+            "first_signup": first_signup,
+        },
+    )
+    return SignupAccepted(first_signup=first_signup)
 
 
 @router.post(

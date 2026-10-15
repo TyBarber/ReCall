@@ -15,7 +15,7 @@ describe("AlertSignupForm", () => {
     );
     const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 202 }));
     vi.stubGlobal("fetch", fetchMock);
-    render(<AlertSignupForm />);
+    const { unmount } = render(<AlertSignupForm source="home" />);
 
     fireEvent.change(screen.getByLabelText("Email address"), {
       target: { value: "ty@example.com" },
@@ -28,8 +28,15 @@ describe("AlertSignupForm", () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       email: "ty@example.com",
       watch_terms: ["Jif"],
+      source: "home",
       website: "",
     });
+
+    // The device remembers the signup, so neither form asks again.
+    unmount();
+    render(<AlertSignupForm source="how_it_works" />);
+    expect(screen.getByText("You’re on the list.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
   });
 
   it("can leave the watchlist out and shows server errors", async () => {
@@ -41,7 +48,7 @@ describe("AlertSignupForm", () => {
       Response.json({ error: "Please enter a valid email address." }, { status: 400 }),
     );
     vi.stubGlobal("fetch", fetchMock);
-    render(<AlertSignupForm />);
+    render(<AlertSignupForm source="how_it_works" />);
 
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "x" } });
