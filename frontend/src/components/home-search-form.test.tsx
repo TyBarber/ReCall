@@ -20,7 +20,7 @@ describe("HomeSearchForm", () => {
   });
 
   it("submits the hero search to the recall directory", () => {
-    const { container } = render(<HomeSearchForm />);
+    render(<HomeSearchForm />);
     fireEvent.change(screen.getByRole("searchbox"), {
       target: { value: "milk & eggs" },
     });
@@ -29,13 +29,9 @@ describe("HomeSearchForm", () => {
     expect(push).toHaveBeenCalledWith(
       "/recalls?search=milk%20%26%20eggs&page=1",
     );
-    expect(screen.getByRole("button", { name: "Search" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Check" })).toHaveAttribute(
       "type",
       "submit",
-    );
-    expect(container.querySelector("svg.command-icon")).toHaveAttribute(
-      "aria-hidden",
-      "true",
     );
   });
 });

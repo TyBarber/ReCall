@@ -45,16 +45,12 @@ describe("SearchForm", () => {
     );
     expect(screen.getByDisplayValue("1")).toHaveAttribute("name", "page");
     expect(screen.queryByText(/most serious/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Search" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Check" })).toHaveAttribute(
       "type",
       "submit",
     );
     expect(container.querySelector("details.more-filters")).toHaveAttribute(
       "open",
-    );
-    expect(container.querySelector("svg.command-icon")).toHaveAttribute(
-      "aria-hidden",
-      "true",
     );
   });
 

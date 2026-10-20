@@ -1,12 +1,10 @@
 import Link from "next/link";
 
-import { FoodIcon } from "@/components/food-icon";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
 import {
   displayCompany,
   displayProductName,
-  foodCategory,
   formatClassification,
   formatRecallDate,
   recallSeverity,
@@ -43,6 +41,7 @@ function codeSummary(recall: Recall): string | null {
   return `${total} code${total === 1 ? "" : "s"}`;
 }
 
+/** One recall, printed as a line item on a receipt. */
 export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
   const isPreview = variant === "preview";
   const severity = recallSeverity(recall);
@@ -50,76 +49,69 @@ export function RecallCard({ recall, variant = "directory" }: RecallCardProps) {
   const codes = isPreview ? null : codeSummary(recall);
   const displayDate = recall.reported_at || recall.recall_date;
   const isPublicHealthAlert = recall.record_type === "public_health_alert";
+  const href = `/recalls/${recall.id}`;
 
   return (
-    <article
-      className={`recall-card tone-${severity.key}${isPreview ? " recall-card-preview" : ""}`}
-    >
-      <div className="card-top">
-        <span className="food-tile">
-          <FoodIcon category={foodCategory(recall)} />
-        </span>
-        <span className="severity-pill">
+    <article className={`recall-item tone-${severity.key}`}>
+      <div className="line">
+        <h3>
+          <Link href={href}>{displayProductName(recall.product_name)}</Link>
+        </h3>
+        <span className="line-fill" aria-hidden="true" />
+        <span className="tag line-value">
           {isPublicHealthAlert ? "Public Health Alert" : severity.label}
         </span>
       </div>
-      <div className="card-heading">
-        <p className="card-company">
-          {displayCompany(recall) ?? "Company not named"}
+      <div className="item-detail">
+        <p>{displayCompany(recall) ?? "Company not named"}</p>
+        <p>
+          <span className="sr-only">Why it was recalled: </span>
+          {recall.recall_reason}
         </p>
-        <h3>{displayProductName(recall.product_name)}</h3>
-      </div>
-      <p className="card-reason">
-        <span className="sr-only">Why it was recalled: </span>
-        {recall.recall_reason}
-      </p>
-      {displayDate || distribution || codes ? (
-        <dl className="card-facts" aria-label="Recall quick facts">
-          {displayDate ? (
-            <div>
-              <dt>
-                {recall.reported_at
-                  ? reportedDateLabel(recall.source)
-                  : "Recall started"}
-              </dt>
-              <dd>{formatRecallDate(displayDate)}</dd>
-            </div>
-          ) : null}
-          {distribution ? (
-            <div>
-              <dt>Sold/distributed in</dt>
-              <dd title={distribution}>{distribution}</dd>
-            </div>
-          ) : null}
-          {codes ? (
-            <div>
-              <dt>
-                {recall.source === "fda"
-                  ? "Product codes reported by FDA"
-                  : "Product identifiers reported by USDA FSIS"}
-              </dt>
-              <dd>{codes}</dd>
-            </div>
-          ) : null}
-        </dl>
-      ) : null}
-      <div className="card-footer">
-        <div className="card-signals" aria-label="Recall classification and status">
-          {formatClassification(recall.classification, recall.source) ? null : (
-            <span className="card-source">{sourceShortName(recall.source)}</span>
-          )}
-          <RecallClassification
-            classification={recall.classification}
-            source={recall.source}
-          />
-          {!isPublicHealthAlert || recall.status !== "Public Health Alert" ? (
-            <StatusBadge status={recall.status} />
-          ) : null}
-        </div>
-        <Link className="card-detail-link" href={`/recalls/${recall.id}`}>
-          {isPreview ? "View recall" : "View recall details"}
-          <span aria-hidden="true">→</span>
-        </Link>
+        {displayDate || distribution || codes ? (
+          <dl aria-label="Recall quick facts">
+            {displayDate ? (
+              <div>
+                <dt>
+                  {recall.reported_at
+                    ? reportedDateLabel(recall.source)
+                    : "Recall started"}
+                </dt>
+                <dd>{formatRecallDate(displayDate)}</dd>
+              </div>
+            ) : null}
+            {distribution ? (
+              <div>
+                <dt>Sold/distributed in</dt>
+                <dd title={distribution}>{distribution}</dd>
+              </div>
+            ) : null}
+            {codes ? (
+              <div>
+                <dt>
+                  {recall.source === "fda"
+                    ? "Product codes reported by FDA"
+                    : "Product identifiers reported by USDA FSIS"}
+                </dt>
+                <dd>{codes}</dd>
+              </div>
+            ) : null}
+          </dl>
+        ) : null}
+        {isPreview ? null : (
+          <div className="item-signals" aria-label="Recall classification and status">
+            {formatClassification(recall.classification, recall.source) ? null : (
+              <span>{sourceShortName(recall.source)}</span>
+            )}
+            <RecallClassification
+              classification={recall.classification}
+              source={recall.source}
+            />
+            {!isPublicHealthAlert || recall.status !== "Public Health Alert" ? (
+              <StatusBadge status={recall.status} />
+            ) : null}
+          </div>
+        )}
       </div>
     </article>
   );

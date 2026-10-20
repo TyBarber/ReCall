@@ -1,22 +1,17 @@
 export default function RecallDetailLoading() {
   return (
-    <main className="shell detail-page loading-content">
+    <main className="state-page loading-content">
       <span className="sr-only">Loading recall details</span>
-      <div className="skeleton skeleton-link" />
-      <div className="detail-header" aria-hidden="true">
-        <div className="skeleton skeleton-pill" />
-        <div className="skeleton skeleton-line skeleton-wide" />
-        <div className="skeleton skeleton-line" />
-        <div className="skeleton skeleton-block" />
-      </div>
-      <div className="detail-layout" aria-hidden="true">
-        <div className="detail-main">
-          <div className="detail-section">
-            <div className="skeleton skeleton-line skeleton-wide" />
-            <div className="skeleton skeleton-block skeleton-tall" />
+      <div className="receipt" aria-hidden="true">
+        <div className="skeleton skeleton-title" />
+        <div className="skeleton skeleton-short" style={{ margin: "0 auto" }} />
+        <hr className="cut" />
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} style={{ marginBottom: 22 }}>
+            <div className="skeleton skeleton-wide" />
+            <div className="skeleton skeleton-short" />
           </div>
-        </div>
-        <div className="detail-sidebar skeleton skeleton-tall" />
+        ))}
       </div>
     </main>
   );

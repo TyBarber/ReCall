@@ -74,23 +74,19 @@ function DirectionControl({
   disabled: boolean;
   href: string;
 }) {
-  const arrow = direction === "Previous" ? "←" : "→";
+  const className = `r-btn page-direction${direction === "Previous" ? " r-btn-ghost" : ""}`;
 
   if (disabled) {
     return (
-      <span className="page-direction page-direction-disabled" aria-disabled="true">
-        {direction === "Previous" ? <span aria-hidden="true">{arrow}</span> : null}
+      <span className={`${className} page-direction-disabled`} aria-disabled="true">
         {direction}
-        {direction === "Next" ? <span aria-hidden="true">{arrow}</span> : null}
       </span>
     );
   }
 
   return (
-    <Link className="page-direction" href={href}>
-      {direction === "Previous" ? <span aria-hidden="true">{arrow}</span> : null}
+    <Link className={className} href={href}>
       {direction}
-      {direction === "Next" ? <span aria-hidden="true">{arrow}</span> : null}
     </Link>
   );
 }

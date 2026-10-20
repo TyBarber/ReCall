@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { SearchButton } from "@/components/search-button";
-import { SearchIcon } from "@/components/ui/search-icon";
 import {
   SEVERITY_FILTERS,
   severityByKey,
@@ -85,9 +84,9 @@ export function SearchForm({
   severityFilterAvailable = false,
 }: SearchFormProps) {
   return (
-    <div className="command-search">
+    <div className="kraft-search-block">
       <Form
-        className="command-form"
+        className="kraft-search-form"
         action="/recalls"
         role="search"
         aria-label="Search food recalls"
@@ -99,11 +98,10 @@ export function SearchForm({
           <input name="record_type" type="hidden" value={recordType} />
         ) : null}
         {level ? <input name="level" type="hidden" value={level} /> : null}
-        <label className="command-label" htmlFor="search">
+        <label className="sr-only" htmlFor="search">
           Search current recalls
         </label>
-        <div className="command-bar">
-          <SearchIcon className="command-icon" />
+        <div className="kraft-search">
           <input
             id="search"
             name="search"
@@ -116,35 +114,30 @@ export function SearchForm({
         </div>
       </Form>
       <BarcodeScanner />
-      <div className="search-support">
+      <div className="filters">
         {severityFilterAvailable ? (
           <div
-            className="status-chips"
+            className="filter-group"
             aria-label="Filter recalls by how serious they are"
           >
-            <span className="support-label">How serious</span>
+            <span>How serious</span>
             {LEVELS.map(([value, label]) => {
               const active = level === value;
               return (
                 <Link
-                  className={`status-chip severity-chip${value ? ` tone-${value}` : ""}${active ? " status-chip-active" : ""}`}
+                  className="toggle"
                   href={searchHref(search, status, source, recordType, value)}
                   aria-current={active ? "page" : undefined}
                   key={value || "all-levels"}
                 >
-                  {active ? (
-                    <span className="chip-check" aria-hidden="true">
-                      ✓
-                    </span>
-                  ) : null}
                   {label}
                 </Link>
               );
             })}
           </div>
         ) : null}
-        <div className="quick-searches" aria-label="Suggested searches">
-          <span className="support-label">Try</span>
+        <div className="filter-group quick-searches" aria-label="Suggested searches">
+          <span>Try</span>
           {[
             ["Salmonella", "Salmonella"],
             ["Listeria", "Listeria"],
@@ -156,22 +149,17 @@ export function SearchForm({
             </Link>
           ))}
         </div>
-        <div className="status-chips" aria-label="Filter recalls by source">
-          <span className="support-label">Source</span>
+        <div className="filter-group" aria-label="Filter recalls by source">
+          <span>Source</span>
           {SOURCES.map(([value, label]) => {
             const active = source === value;
             return (
               <Link
-                className={`status-chip${active ? " status-chip-active" : ""}`}
+                className="toggle"
                 href={searchHref(search, status, value, recordType, level)}
                 aria-current={active ? "page" : undefined}
                 key={value || "all-sources"}
               >
-                {active ? (
-                  <span className="chip-check" aria-hidden="true">
-                    ✓
-                  </span>
-                ) : null}
                 {label}
               </Link>
             );
@@ -179,43 +167,33 @@ export function SearchForm({
         </div>
         <details className="more-filters" open={Boolean(status || recordType)}>
           <summary>More filters</summary>
-          <div className="status-chips" aria-label="Filter recalls by status">
-            <span className="support-label">Status</span>
+          <div className="filter-group" aria-label="Filter recalls by status">
+            <span>Status</span>
             {STATUSES.map((value) => {
               const active = status === value;
               return (
                 <Link
-                  className={`status-chip${active ? " status-chip-active" : ""}`}
+                  className="toggle"
                   href={searchHref(search, value, source, recordType, level)}
                   aria-current={active ? "page" : undefined}
                   key={value || "all"}
                 >
-                  {active ? (
-                    <span className="chip-check" aria-hidden="true">
-                      ✓
-                    </span>
-                  ) : null}
                   {value || "All"}
                 </Link>
               );
             })}
           </div>
-          <div className="status-chips" aria-label="Filter recalls by record type">
-            <span className="support-label">Type</span>
+          <div className="filter-group" aria-label="Filter recalls by record type">
+            <span>Type</span>
             {RECORD_TYPES.map(([value, label]) => {
               const active = recordType === value;
               return (
                 <Link
-                  className={`status-chip${active ? " status-chip-active" : ""}`}
+                  className="toggle"
                   href={searchHref(search, status, source, value, level)}
                   aria-current={active ? "page" : undefined}
                   key={value || "all-record-types"}
                 >
-                  {active ? (
-                    <span className="chip-check" aria-hidden="true">
-                      ✓
-                    </span>
-                  ) : null}
                   {label}
                 </Link>
               );

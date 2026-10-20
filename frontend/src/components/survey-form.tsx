@@ -118,7 +118,7 @@ export function SurveyForm() {
         </p>
       ) : null}
       <button
-        className="primary-button"
+        className="r-btn"
         disabled={state.kind === "sending"}
         type="submit"
       >

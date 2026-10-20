@@ -55,12 +55,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="shell header-inner">
         <Link className="brand" href="/" aria-label="ReCall home">
-          <span className="brand-mark" aria-hidden="true">
-            R
-          </span>
-          <span className="brand-name">
-            ReCall<span aria-hidden="true">.</span>
-          </span>
+          ReCall
         </Link>
 
         <nav className="desktop-site-nav" aria-label="Primary navigation">
@@ -91,11 +86,7 @@ export function SiteHeader() {
           aria-controls="mobile-site-navigation"
           onClick={() => setMenuState({ open: !menuOpen, pathname })}
         >
-          <span className="mobile-nav-icon" aria-hidden="true">
-            <span />
-            <span />
-          </span>
-          <span>{menuOpen ? "Close" : "Menu"}</span>
+          {menuOpen ? "Close" : "Menu"}
         </button>
       </div>
 

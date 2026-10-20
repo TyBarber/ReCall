@@ -4,28 +4,19 @@ import Link from "next/link";
 
 import { AlertSignupForm } from "@/components/alert-signup-form";
 
-/** Home-page invitation to join the email alerts interest list. */
+/** Home-page invitation to join the email alerts interest list, beside the receipt. */
 export function AlertsCallout() {
   return (
-    <section
-      aria-labelledby="alerts-callout-title"
-      className="shell alerts-callout"
-      id="alerts"
-    >
-      <div className="alerts-callout-card">
-        <div className="alerts-callout-copy">
-          <span className="sticker">Coming soon</span>
-          <h2 id="alerts-callout-title">
-            Get an email when food you watch is recalled
-          </h2>
-          <p>
-            Alerts aren’t ready yet. Leave your email and we’ll tell you when
-            they are. Searching stays free, with no sign-up.{" "}
-            <Link href="/how-it-works#privacy">How we handle your email</Link>
-          </p>
-        </div>
-        <AlertSignupForm source="home" />
-      </div>
+    <section aria-labelledby="alerts-callout-title" className="side-alerts" id="alerts">
+      <h2 className="side-label" id="alerts-callout-title">
+        Coming soon: email alerts
+      </h2>
+      <p className="side-soft">
+        Get one email when something you watch is recalled. Leave your address
+        and we’ll tell you when alerts are ready.{" "}
+        <Link href="/how-it-works#privacy">How we handle your email</Link>
+      </p>
+      <AlertSignupForm source="home" />
     </section>
   );
 }

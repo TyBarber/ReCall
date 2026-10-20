@@ -37,7 +37,7 @@ export function WatchButton({ term, placement, label, className = "" }: WatchBut
   return (
     <button
       aria-pressed={watching}
-      className={`chunky-button watch-button${watching ? " watch-button-active" : ""} ${className}`.trim()}
+      className={`watch-button${watching ? " watch-button-active" : ""} ${className}`.trim()}
       disabled={full}
       onClick={() => {
         if (watching) {

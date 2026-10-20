@@ -1,23 +1,24 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Archivo_Black, Atkinson_Hyperlegible } from "next/font/google";
+import { Azeret_Mono, Hanken_Grotesk } from "next/font/google";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 import "./globals.css";
 
-const displayFont = Archivo_Black({
+// Receipt text is printed in a monospace; text on the kraft paper is a sans.
+const monoFont = Azeret_Mono({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-display",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-mono",
 });
 
-const bodyFont = Atkinson_Hyperlegible({
+const sansFont = Hanken_Grotesk({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-body",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${displayFont.variable} ${bodyFont.variable}`}
+      className={`${monoFont.variable} ${sansFont.variable}`}
       data-scroll-behavior="smooth"
     >
       <body>
@@ -41,7 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           Skip to main content
         </a>
         <SiteHeader />
-        <div id="main-content" className="page-body">
+        <div id="main-content">
           {children}
         </div>
         <SiteFooter />
