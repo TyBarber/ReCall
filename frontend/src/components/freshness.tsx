@@ -13,7 +13,7 @@ export function FreshnessSticker({
   const ago = latest ? formatTimeAgo(latest) : null;
 
   return (
-    <span className={`sticker ${className}`.trim()}>
+    <span className={className || undefined}>
       {ago ? (
         <time dateTime={latest ?? undefined}>Checked {ago}</time>
       ) : (
@@ -37,9 +37,8 @@ export function FreshnessDetails({ sources }: { sources: SourceFreshness[] | nul
 
   return (
     <p className="footer-freshness">
-      {checked.map(({ source, ago, at }, index) => (
+      {checked.map(({ source, ago, at }) => (
         <span key={source}>
-          {index > 0 ? " · " : null}
           {sourceShortName(source)} last checked <time dateTime={at}>{ago}</time>
         </span>
       ))}

@@ -5,14 +5,15 @@ import Link from "next/link";
 import { WatchButton } from "@/components/watch-button";
 import { useWatchlist } from "@/lib/watchlist";
 
-/** Full-width invitation to watch the current search on the results page. */
+/** Invitation to watch the current search, beside the results. */
 export function WatchStrip({ term }: { term: string }) {
   const watchlist = useWatchlist();
   const watching = watchlist.isWatching(term);
 
   return (
     <div className={`watch-strip${watching ? " watch-strip-active" : ""}`}>
-      <p>
+      <WatchButton placement="results" term={term} />
+      <p style={{ marginTop: 12 }}>
         {watching ? (
           <>
             <strong>You’re watching “{term}”.</strong> New recalls that match
@@ -27,7 +28,6 @@ export function WatchStrip({ term }: { term: string }) {
           </>
         )}
       </p>
-      <WatchButton placement="results" term={term} />
     </div>
   );
 }

@@ -6,18 +6,14 @@ export async function SiteFooter() {
 
   return (
     <footer className="site-footer">
-      <div className="shell footer-inner">
+      <div className="footer-inner">
         <div>
-          <strong>ReCall</strong>
-          <p>Clear food recall information for everyday decisions.</p>
-        </div>
-        <div className="footer-trust">
           <p>
-            Recall information is sourced from U.S. FDA and USDA FSIS data and
-            may be updated as investigations develop.
+            ReCall is an independent project. Recall information comes from the
+            U.S. FDA and USDA FSIS and may be updated as investigations develop.
           </p>
-          <FreshnessDetails sources={freshness} />
         </div>
+        <FreshnessDetails sources={freshness} />
       </div>
     </footer>
   );

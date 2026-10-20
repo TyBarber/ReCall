@@ -46,47 +46,47 @@ export function WatchlistTeaser() {
 
   return (
     <section
-      className="shell watchlist watchlist-teaser"
+      className="watchlist watchlist-teaser"
       aria-labelledby="watchlist-teaser-title"
       id="watchlist"
     >
-      <div className="watchlist-teaser-card">
-        <div className="watchlist-teaser-copy">
-          <span className="sticker">New</span>
-          <h2 id="watchlist-teaser-title">Keep an eye on the foods you buy</h2>
-          <p>
-            Watch a food, brand, or barcode. Any recall that matches shows up
-            right here, and new ones get flagged when you come back. No account
-            needed. Your watchlist stays on this device.
-          </p>
-        </div>
-        <form
-          className="watchlist-teaser-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!term.trim()) {
-              return;
-            }
-            watchlist.add(term);
-            recordWatch("home_teaser");
-            setTerm("");
-          }}
-        >
-          <label htmlFor="watch-term">What do you want to watch?</label>
+      <h2 className="r-label" id="watchlist-teaser-title">
+        Keep an eye on the foods you buy
+      </h2>
+      <p>Nothing watched yet.</p>
+      <p className="watchlist-note">
+        Watch a food, brand, or barcode. Any recall that matches prints here,
+        and new ones get marked when you come back. No account needed. Your
+        watchlist stays on this device.
+      </p>
+      <form
+        className="watch-add"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!term.trim()) {
+            return;
+          }
+          watchlist.add(term);
+          recordWatch("home_teaser");
+          setTerm("");
+        }}
+      >
+        <label htmlFor="watch-term">What do you want to watch?</label>
+        <div className="lookup">
           <input
             id="watch-term"
             maxLength={MAX_TERM_LENGTH}
             onChange={(event) => setTerm(event.target.value)}
-            placeholder="e.g. Jif, cheddar, or a barcode number"
+            placeholder="Jif, cheddar, or a barcode"
             type="text"
             value={term}
           />
-          <button className="primary-button" type="submit">
+          <button className="r-btn" type="submit">
             <BookmarkIcon filled={false} />
             Watch it
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </section>
   );
 }
@@ -141,26 +141,18 @@ export function Watchlist() {
   );
 
   return (
-    <section
-      className="shell watchlist"
-      aria-labelledby="watchlist-title"
-      id="watchlist"
-    >
-      <div className="section-heading">
-        <div className="section-title">
-          <h2 id="watchlist-title">Your watchlist</h2>
-          {newCount > 0 ? (
-            <span className="sticker watchlist-new-count">{newCount} new</span>
-          ) : null}
-        </div>
+    <section className="watchlist" aria-labelledby="watchlist-title" id="watchlist">
+      <div className="watchlist-head">
+        <h2 className="r-label" id="watchlist-title">
+          Your watchlist
+        </h2>
         {newCount > 0 ? (
-          <button
-            className="chunky-button"
-            onClick={watchlist.markAllSeen}
-            type="button"
-          >
-            Mark all as seen
-          </button>
+          <>
+            <span className="new-mark">{newCount} new</span>
+            <button onClick={watchlist.markAllSeen} type="button">
+              Mark all as seen
+            </button>
+          </>
         ) : null}
       </div>
       <p className="watchlist-note">
@@ -172,18 +164,18 @@ export function Watchlist() {
           Your watchlist couldn’t be checked right now. Try again later.
         </p>
       ) : null}
-      <ul className="watchlist-grid">
+      <ul className="watch-terms">
         {watchlist.items.map((item) => {
           const result = resultFor(item);
           return (
-            <li className="watchlist-card" key={item.term}>
-              <div className="watchlist-card-header">
+            <li className="watch-term" key={item.term}>
+              <div className="watch-term-head">
                 <h3>
                   <Link href={searchHref(item.term)}>{item.term}</Link>
                 </h3>
+                <span className="line-fill" aria-hidden="true" />
                 <button
                   aria-label={`Stop watching ${item.term}`}
-                  className="watchlist-remove"
                   onClick={() => watchlist.remove(item.term)}
                   type="button"
                 >
@@ -195,24 +187,24 @@ export function Watchlist() {
               ) : result?.recalls === null ? (
                 <p className="watchlist-note">Couldn’t check this one.</p>
               ) : result && result.recalls.length > 0 ? (
-                <ul className="watchlist-matches">
+                <ul className="watch-matches">
                   {result.recalls.map((recall) => {
                     const severity = recallSeverity(recall);
                     return (
                       <li className={`tone-${severity.key}`} key={recall.id}>
                         <Link href={`/recalls/${recall.id}`}>
-                          <span className="watchlist-swatch" aria-hidden="true" />
                           <span>
                             <strong>{displayProductName(recall.product_name)}</strong>
+                            <br />
                             <small>
-                              {severity.label}
+                              <span className="tag">{severity.label}</span>
                               {matchDate(recall)
-                                ? ` · ${formatRecallDate(matchDate(recall))}`
+                                ? `, ${formatRecallDate(matchDate(recall))}`
                                 : ""}
                             </small>
                           </span>
                           {isNewSince(recall, item.lastSeenAt) ? (
-                            <span className="chip watchlist-new">New</span>
+                            <span className="new-mark">New</span>
                           ) : null}
                         </Link>
                       </li>

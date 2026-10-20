@@ -136,7 +136,7 @@ export function BarcodeScanner({ className = "" }: { className?: string }) {
       >
         <div className="scanner-header">
           <h2 id="scanner-title">Scan a barcode</h2>
-          <button className="chunky-button" onClick={close} type="button">
+          <button className="r-btn r-btn-ghost" onClick={close} type="button">
             Close
           </button>
         </div>

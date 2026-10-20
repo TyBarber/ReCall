@@ -22,7 +22,7 @@ describe("RecallCard", () => {
     expect(screen.queryByText("FDA recall number")).not.toBeInTheDocument();
     expect(screen.queryByText(recallFixture.id)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /view recall details/i }),
+      screen.getByRole("link", { name: recallFixture.product_name }),
     ).toHaveAttribute("href", `/recalls/${recallFixture.id}`);
   });
 
@@ -112,7 +112,7 @@ describe("RecallCard", () => {
     expect(
       screen.queryByText("Product codes reported by FDA"),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /view recall/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: recallFixture.product_name })).toHaveAttribute(
       "href",
       `/recalls/${recallFixture.id}`,
     );

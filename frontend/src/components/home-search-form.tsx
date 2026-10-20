@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { SearchButton } from "@/components/search-button";
-import { SearchIcon } from "@/components/ui/search-icon";
 
 export function homeSearchHref(search: string): string {
   const query = search.trim();
@@ -14,7 +14,12 @@ export function homeSearchHref(search: string): string {
     : "/recalls";
 }
 
-export function HomeSearchForm() {
+type HomeSearchFormProps = {
+  /** Quick searches printed under the box. */
+  suggestions?: string[];
+};
+
+export function HomeSearchForm({ suggestions = [] }: HomeSearchFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -26,29 +31,38 @@ export function HomeSearchForm() {
   }
 
   return (
-    <div className="command-search home-command-search">
+    <div className="home-search">
       <form
-        className="command-form"
+        className="lookup-form"
         role="search"
         aria-label="Search food recalls"
         onSubmit={handleSubmit}
       >
-        <label className="sr-only" htmlFor="home-search">
-          Search current recalls
+        <label className="r-label" htmlFor="home-search">
+          Look up an item
         </label>
-        <div className="command-bar">
-          <SearchIcon className="command-icon" />
+        <div className="lookup">
           <input
             id="home-search"
             name="search"
             type="search"
-            placeholder="Food, brand, or barcode"
+            placeholder="Peanut butter, Tyson, barcode"
             autoComplete="off"
           />
           <SearchButton pending={pending} />
         </div>
       </form>
       <BarcodeScanner />
+      {suggestions.length > 0 ? (
+        <p className="hint">
+          Common:{" "}
+          {suggestions.map((label) => (
+            <Link href={homeSearchHref(label)} key={label}>
+              {label.toLowerCase()}
+            </Link>
+          ))}
+        </p>
+      ) : null}
     </div>
   );
 }

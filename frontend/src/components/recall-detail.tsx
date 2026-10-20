@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { FoodIcon } from "@/components/food-icon";
+import { Barcode, Cut, isValidUpc } from "@/components/receipt";
 import { RecallClassification } from "@/components/recall-classification";
 import { StatusBadge } from "@/components/status-badge";
 import { WatchButton } from "@/components/watch-button";
@@ -9,7 +9,6 @@ import {
   displayCompany,
   displayProductName,
   softenCapitals,
-  foodCategory,
   formatRecallDate,
   hasUsefulSourceUrl,
   recallSeverity,
@@ -125,17 +124,75 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
     ? companyWatchTerm(softenCapitals(watchedCompany))
     : null;
 
-  return (
-    <main className="shell detail-page">
-      <Link className="back-link" href="/recalls">
-        <span aria-hidden="true">←</span> Back to recalls
-      </Link>
+  const barcode = upcCodes.find(isValidUpc);
+  const sourceLink = sourceUrl ? (
+    <a
+      className="r-btn r-btn-ghost"
+      href={sourceUrl}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`View ${agency} source data (opens in a new tab)`}
+    >
+      View {agency} source data
+    </a>
+  ) : null;
 
-      <header className={`detail-header tone-${severity.key}`}>
-        <div className="card-badges">
-          {isPublicHealthAlert ? (
-            <span className="record-type-badge">Public Health Alert</span>
+  return (
+    <div className="stage">
+      <div className="side">
+        <Link className="back-link" href="/recalls">
+          Back to recalls
+        </Link>
+        <h2 className="side-title-mid">Have this at home?</h2>
+        <p>
+          Check the codes on your package against this notice. If they match,
+          follow the official recall notice from the {agency} or the company.
+        </p>
+        <div className="side-actions">
+          {companyTerm ? (
+            <WatchButton label={companyTerm} placement="detail" term={companyTerm} />
           ) : null}
+          {sourceLink}
+        </div>
+        {companyTerm ? (
+          <p className="side-soft">New recalls from them get flagged on your home page.</p>
+        ) : null}
+      </div>
+
+      <main className="receipt" aria-label="Recall notice">
+        <header className="receipt-head">
+          <p className="store store-small">RECALL NOTICE</p>
+          <p className="receipt-meta">
+            <span>
+              {isPublicHealthAlert ? "USDA FSIS Public Health Alert" : `${agency} food recall`}
+            </span>
+            {sourceRecallId ? <span>{sourceRecallId}</span> : null}
+          </p>
+        </header>
+        <Cut />
+
+        <h1 className="notice-title">{productName}</h1>
+        {recallingFirm || brand ? (
+          <div className="notice-company">
+            <p>
+              {recallingFirm ? "Recalling firm" : "Brand or recalling firm"}
+            </p>
+            <p>
+              <strong>{softenCapitals(recallingFirm ?? brand ?? "")}</strong>
+            </p>
+            {showSeparateBrand ? (
+              <p>
+                <strong>Brand</strong> {brand ? softenCapitals(brand) : null}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="notice-missing">
+            Brand or recalling firm not provided in the {agency} record.
+          </p>
+        )}
+        <div className="notice-signals">
+          {isPublicHealthAlert ? <span>Public Health Alert</span> : null}
           <RecallClassification
             classification={recall.classification}
             source={recall.source}
@@ -144,232 +201,208 @@ export function RecallDetailView({ recall }: RecallDetailViewProps) {
             <StatusBadge status={recall.status} />
           ) : null}
         </div>
-        <p className="eyebrow">
-          {isPublicHealthAlert ? "USDA FSIS Public Health Alert" : `${agency} food recall`}
-        </p>
-        <h1>{productName}</h1>
-        {productName !== fullProductName &&
-        normalizedValue(recall.description ?? "") !==
-          normalizedValue(fullProductName) ? (
-          <p className="detail-full-name">
-            <span>Full product name: </span>
-            {fullProductName}
-          </p>
-        ) : null}
-        {recallingFirm || brand ? (
-          <div className="detail-company">
-            <span>
-              {recallingFirm ? "Recalling firm" : "Brand or recalling firm"}
-            </span>
-            <p>{softenCapitals(recallingFirm ?? brand ?? "")}</p>
-            {showSeparateBrand ? (
-              <p className="detail-company-brand">
-                <strong>Brand</strong> {brand ? softenCapitals(brand) : null}
-              </p>
-            ) : null}
-            {companyTerm ? (
-              <div className="detail-watch">
-                <WatchButton
-                  label={companyTerm}
-                  placement="detail"
-                  term={companyTerm}
-                />
-                <small>New recalls from them get flagged on your home page.</small>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <p className="detail-missing detail-missing-company">
-            Brand or recalling firm not provided in the {agency} record.
-          </p>
-        )}
 
-        <section className="severity-banner" aria-labelledby="severity-level">
-          <span className="food-tile food-tile-large">
-            <FoodIcon category={foodCategory(recall)} />
-          </span>
-          <div>
-            <h2 id="severity-level">{severity.label}</h2>
-            <p>{severity.summary}</p>
-          </div>
+        <section
+          className={`callout tone-${severity.key} notice-section`}
+          aria-labelledby="severity-level"
+        >
+          <h2 className="r-label" id="severity-level">
+            {severity.label}
+          </h2>
+          <p>{severity.summary}</p>
         </section>
 
-        <section className="detail-reason-summary" aria-labelledby="recall-reason">
-          <h2 id="recall-reason">Why it was recalled</h2>
+        <section className="notice-section" aria-labelledby="recall-reason">
+          <h2 className="r-label" id="recall-reason">
+            Why it was recalled
+          </h2>
           <p>
             {isUsefulText(recall.recall_reason)
               ? recall.recall_reason.trim()
               : `A reason was not provided in the ${agency} record.`}
           </p>
         </section>
-      </header>
 
-      <div className="detail-layout">
-        <article className="detail-main" aria-label="Recall details">
-          <section className="detail-section">
-            <h2>Key dates</h2>
-            {recall.reported_at || recall.recall_date ? (
-              <dl className="detail-date-grid">
-                {recall.reported_at ? (
-                  <div>
-                    <dt>{reportedDateLabel(recall.source)}</dt>
-                    <dd>{formatRecallDate(recall.reported_at)}</dd>
-                  </div>
-                ) : null}
-                {recall.recall_date ? (
-                  <div>
-                    <dt>Recall started</dt>
-                    <dd>{formatRecallDate(recall.recall_date)}</dd>
-                  </div>
-                ) : null}
-              </dl>
-            ) : (
-              <p className="detail-missing">
-                Dates were not provided in the {agency} record.
-              </p>
-            )}
-          </section>
-
-          {productItems.length > 0 ? (
-            <section className="detail-section">
-              <h2>Affected products</h2>
-              <ul className="detail-product-list">
-                {productItems.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
-          ) : isUsefulText(recall.description) ? (
-            <section className="detail-section">
-              <h2>Affected product</h2>
-              <p>{recall.description.trim()}</p>
-            </section>
-          ) : null}
-
-          <section className="detail-section">
-            <h2>Where it was distributed</h2>
-            {states.length > 0 ? (
-              <dl className="distribution-facts">
-                <div>
-                  <dt>States reported</dt>
-                  <dd>{states.join(", ")}</dd>
+        <Cut dots />
+        <section aria-labelledby="key-dates">
+          <h2 className="r-label" id="key-dates">
+            Key dates
+          </h2>
+          {recall.reported_at || recall.recall_date ? (
+            <dl className="lines">
+              {recall.reported_at ? (
+                <div className="line">
+                  <dt>{reportedDateLabel(recall.source)}</dt>
+                  <span className="line-fill" aria-hidden="true" />
+                  <dd className="line-value">{formatRecallDate(recall.reported_at)}</dd>
                 </div>
-              </dl>
-            ) : distributionPattern ? (
-              <p>{distributionPattern}</p>
-            ) : (
-              <p className="detail-missing">
-                Distribution details were not provided in the {agency} record.
-              </p>
-            )}
-          </section>
-
-          <section className="detail-section" aria-labelledby="package-checks">
-            <h2 id="package-checks">What to check on your package</h2>
-            {hasPackageIdentifiers ? (
-              <>
-                <p className="section-note">
-                  These values are preserved from {agency} data. Check the wording
-                  and numbers against your package.
-                </p>
-                {productCodeInfo ? (
-                  <div className="code-group">
-                    <h3>{agency}-reported product/code information</h3>
-                    <p className="reported-code-info">{productCodeInfo}</p>
-                  </div>
-                ) : null}
-                {upcCodes.length > 0 ? (
-                  <div className="code-group">
-                    <h3>UPC</h3>
-                    <ul className="code-list">
-                      {upcCodes.map((code) => (
-                        <li key={code}>{code}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-                {lotNumbers.length > 0 ? (
-                  <div className="code-group">
-                    <h3>Lot / batch information</h3>
-                    <ul className="code-list">
-                      {lotNumbers.map((code) => (
-                        <li key={code}>{code}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-                {establishmentNumbers.length > 0 ? (
-                  <div className="code-group">
-                    <h3>USDA establishment number</h3>
-                    <ul className="code-list">
-                      {establishmentNumbers.map((code) => (
-                        <li key={code}>{code}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <p className="detail-missing">
-                {recall.source === "fda"
-                  ? "Product codes were not provided in the FDA record."
-                  : "Product identifiers were not provided in the USDA FSIS record."}
-              </p>
-            )}
-          </section>
-        </article>
-
-        <aside className="detail-sidebar" aria-label="Source and additional details">
-          <section className="detail-sidebar-section source-section">
-            <h2>Source</h2>
-            <p className="source-name">{fullAgencyName}</p>
-            <p className="source-note">
-              Recall information may be updated as investigations develop.
+              ) : null}
+              {recall.recall_date ? (
+                <div className="line">
+                  <dt>Recall started</dt>
+                  <span className="line-fill" aria-hidden="true" />
+                  <dd className="line-value">{formatRecallDate(recall.recall_date)}</dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : (
+            <p className="notice-missing">
+              Dates were not provided in the {agency} record.
             </p>
-            {sourceUrl ? (
-              <a
-                className="source-link"
-                href={sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`View ${agency} source data (opens in a new tab)`}
-              >
-                View {agency} source data <span aria-hidden="true">↗</span>
-              </a>
-            ) : null}
-            {sourceDocuments.length > 0 ? (
-              <div className="source-documents">
-                <h3>Product labels and documents</h3>
-                <ul>
-                  {sourceDocuments.map((url, index) => (
-                    <li key={url}>
-                      <a href={url} target="_blank" rel="noreferrer">
-                        Source document {index + 1} <span aria-hidden="true">↗</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </section>
+          )}
+        </section>
 
-          {sourceRecallId ? (
-            <section className="detail-sidebar-section">
-              <h2>Additional recall details</h2>
-              <dl className="summary-list">
-                <div>
-                  <dt>
-                    {recall.source === "fda"
-                      ? "FDA recall number"
-                      : "USDA FSIS record number"}
-                  </dt>
-                  <dd>{sourceRecallId}</dd>
+        <section className="notice-section" aria-labelledby="distribution">
+          <h2 className="r-label" id="distribution">
+            Where it was distributed
+          </h2>
+          {states.length > 0 ? (
+            <dl className="lines">
+              <div className="line">
+                <dt>States reported</dt>
+                <span className="line-fill" aria-hidden="true" />
+                <dd className="line-value">{states.join(", ")}</dd>
+              </div>
+            </dl>
+          ) : distributionPattern ? (
+            <p>{distributionPattern}</p>
+          ) : (
+            <p className="notice-missing">
+              Distribution details were not provided in the {agency} record.
+            </p>
+          )}
+        </section>
+
+        <Cut />
+        <section aria-labelledby="package-checks">
+          <h2 className="r-label" id="package-checks">
+            What to check on your package
+          </h2>
+          {hasPackageIdentifiers ? (
+            <>
+              <p className="fine">
+                These values are preserved from {agency} data. Check the wording
+                and numbers against your package.
+              </p>
+              {upcCodes.length > 0 ? (
+                <div className="code-group">
+                  <h3>UPC</h3>
+                  <ul className="code-list">
+                    {upcCodes.map((code) => (
+                      <li key={code}>{code}</li>
+                    ))}
+                  </ul>
                 </div>
-              </dl>
-            </section>
+              ) : null}
+              {lotNumbers.length > 0 ? (
+                <div className="code-group">
+                  <h3>Lot / batch information</h3>
+                  <ul className="code-list">
+                    {lotNumbers.map((code) => (
+                      <li key={code}>{code}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {establishmentNumbers.length > 0 ? (
+                <div className="code-group">
+                  <h3>USDA establishment number</h3>
+                  <ul className="code-list">
+                    {establishmentNumbers.map((code) => (
+                      <li key={code}>{code}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {productCodeInfo ? (
+                <div className="code-group">
+                  <h3>{agency}-reported product/code information</h3>
+                  <p className="reported-code-info">{productCodeInfo}</p>
+                </div>
+              ) : null}
+              {barcode ? (
+                <div>
+                  <Barcode code={barcode} module={2.6} height={64} />
+                  <p className="fine center" style={{ marginTop: 8 }}>
+                    Hold your package next to this barcode to compare.
+                  </p>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <p className="notice-missing">
+              {recall.source === "fda"
+                ? "Product codes were not provided in the FDA record."
+                : "Product identifiers were not provided in the USDA FSIS record."}
+            </p>
+          )}
+        </section>
+
+        {productItems.length > 0 ? (
+          <section className="notice-section" aria-labelledby="affected">
+            <h2 className="r-label" id="affected">
+              Affected products
+            </h2>
+            <ul className="notice-products">
+              {productItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ) : isUsefulText(recall.description) ? (
+          <section className="notice-section" aria-labelledby="affected">
+            <h2 className="r-label" id="affected">
+              Affected product
+            </h2>
+            <p className="fine">{recall.description.trim()}</p>
+          </section>
+        ) : null}
+        {productName !== fullProductName &&
+        normalizedValue(recall.description ?? "") !== normalizedValue(fullProductName) ? (
+          <p className="fine notice-section">
+            <strong>Full product name: </strong>
+            {fullProductName}
+          </p>
+        ) : null}
+
+        <Cut />
+        <section aria-labelledby="source-title">
+          <h2 className="r-label" id="source-title">
+            Source
+          </h2>
+          <p>{fullAgencyName}</p>
+          <p className="fine" style={{ marginTop: 4 }}>
+            Recall information may be updated as investigations develop.
+          </p>
+          {sourceRecallId ? (
+            <dl className="lines" aria-label="Additional recall details">
+              <div className="line">
+                <dt>
+                  {recall.source === "fda"
+                    ? "FDA recall number"
+                    : "USDA FSIS record number"}
+                </dt>
+                <span className="line-fill" aria-hidden="true" />
+                <dd className="line-value">{sourceRecallId}</dd>
+              </div>
+            </dl>
           ) : null}
-        </aside>
-      </div>
-    </main>
+          {sourceDocuments.length > 0 ? (
+            <ul className="source-links" aria-label="Product labels and documents">
+              {sourceDocuments.map((url, index) => (
+                <li key={url}>
+                  <a href={url} target="_blank" rel="noreferrer">
+                    Source document {index + 1}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+        <p className="thanks" style={{ marginTop: 26 }}>
+          END OF NOTICE
+        </p>
+      </main>
+    </div>
   );
 }

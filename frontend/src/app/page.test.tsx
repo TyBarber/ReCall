@@ -32,10 +32,10 @@ describe("Home", () => {
     expect(screen.getByText("Updated daily")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "Get an email when food you watch is recalled",
+        name: "Coming soon: email alerts",
       }),
     ).toBeInTheDocument();
-    expect(getRecalls).toHaveBeenCalledWith({ limit: 7, sort: "newest" });
+    expect(getRecalls).toHaveBeenCalledWith({ limit: 8, sort: "newest" });
 
     const featured = screen.getByRole("article", { name: "Featured recall" });
     expect(
@@ -50,24 +50,16 @@ describe("Home", () => {
       screen.getByRole("heading", { name: "How serious is it?" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Official name: Class I")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Cheese" })).toHaveAttribute(
-      "href",
-      "/recalls?search=Cheese&page=1",
-    );
     expect(
-      screen.getByRole("heading", {
-        name: "The facts you need, without the noise.",
-      }).closest("section"),
-    ).toHaveAttribute("id", "how-it-works");
-    expect(
-      screen.getByRole("heading", { name: "Latest recalls & alerts" }),
+      screen.getByRole("heading", { name: "Recent recalls" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Search" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Check" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Act" })).toBeInTheDocument();
+    expect(screen.getByText("Total")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /view all recalls/i }),
+      screen.getByRole("link", { name: /see all recalls/i }),
     ).toHaveAttribute("href", "/recalls");
+    expect(
+      screen.getByRole("link", { name: "How it works" }),
+    ).toHaveAttribute("href", "/how-it-works#questions");
   });
 
   it("asks the API for the newest Class I recall when filtering is supported", async () => {

@@ -7,8 +7,8 @@ export function SearchButton({ pending: pendingOverride }: { pending?: boolean }
   const pending = pendingOverride ?? formPending;
 
   return (
-    <button className="search-submit" disabled={pending} type="submit">
-      {pending ? "Searching…" : "Search"}
+    <button className="r-btn search-submit" disabled={pending} type="submit">
+      {pending ? "Checking…" : "Check"}
     </button>
   );
 }
