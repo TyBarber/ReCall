@@ -1639,7 +1639,7 @@ dl.lines dd {
 }
 
 /* On phones, the side column's children join the page flow so the alerts
-   sign-up can sit below the receipt instead of above the search. */
+   sign-up sits between the intro and the receipt. */
 @media (max-width: 1100px) {
   .stage {
     display: flex;
@@ -1670,7 +1670,6 @@ dl.lines dd {
   }
 
   .side-after {
-    order: 2;
     margin-top: 10px;
   }
 }
