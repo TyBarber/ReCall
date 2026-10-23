@@ -26,3 +26,6 @@ terraform-plan.txt
 *.tfvars
 !terraform.tfvars.example
 .DS_Store
+
+# Local Claude Code app config
+.claude/
